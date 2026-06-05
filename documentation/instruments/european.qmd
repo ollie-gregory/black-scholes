@@ -1,9 +1,6 @@
 ---
 title: "European Options"
-format:
-  html:
-    toc: true
-    toc-depth: 3
+
 ---
 
 ## What is an Option?

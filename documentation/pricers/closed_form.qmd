@@ -1,9 +1,5 @@
 ---
 title: "Closed-Form Pricer"
-format:
-  html:
-    toc: true
-    toc-depth: 3
 ---
 
 ## Overview

@@ -1,9 +1,5 @@
 ---
 title: "The Black-Scholes Model"
-format:
-  html:
-    toc: true
-    toc-depth: 3
 ---
 
 ## The Problem

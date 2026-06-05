@@ -25,8 +25,12 @@ website:
 
 format:
   html:
-    theme: vapor
     toc: true
+    toc-depth: 3
   pdf:
-    toc: true
+    documentclass: article
     number-sections: true
+    margin-bottom: 0.75in
+    margin-left: 0.75in
+    margin-right: 0.75in
+    margin-top: 0.75in
