@@ -4,6 +4,7 @@ project:
 
 website:
   title: "Options Pricer"
+  site-url: "https://ollie-gregory.github.io/black-scholes/"
   navbar:
     left:
       - text: "Instruments"
