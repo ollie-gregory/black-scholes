@@ -1,0 +1,275 @@
+[
+  {
+    "objectID": "models/black_scholes.html",
+    "href": "models/black_scholes.html",
+    "title": "The Black-Scholes Model",
+    "section": "",
+    "text": "Before Black, Scholes, and Merton published their work in 1973, there was no rigorous, universally accepted method for pricing options. Practitioners used rules of thumb. The fundamental question — what is the fair price of the right to buy a stock at a fixed price on a fixed future date? — had no clean answer.\nThe difficulty is that options are non-linear instruments. The payoff of a call, \\(\\max(S_T - K, 0)\\), is not proportional to the underlying. And the fair price today must somehow reflect the full distribution of possible stock prices at expiry — which is itself uncertain. The insight of Black, Scholes, and Merton was to show that, under certain assumptions, you can eliminate this uncertainty entirely by constructing a continuously rebalanced portfolio. When there is no uncertainty left, the portfolio must earn the risk-free rate — and that constraint pins down the option price."
+  },
+  {
+    "objectID": "models/black_scholes.html#the-problem",
+    "href": "models/black_scholes.html#the-problem",
+    "title": "The Black-Scholes Model",
+    "section": "",
+    "text": "Before Black, Scholes, and Merton published their work in 1973, there was no rigorous, universally accepted method for pricing options. Practitioners used rules of thumb. The fundamental question — what is the fair price of the right to buy a stock at a fixed price on a fixed future date? — had no clean answer.\nThe difficulty is that options are non-linear instruments. The payoff of a call, \\(\\max(S_T - K, 0)\\), is not proportional to the underlying. And the fair price today must somehow reflect the full distribution of possible stock prices at expiry — which is itself uncertain. The insight of Black, Scholes, and Merton was to show that, under certain assumptions, you can eliminate this uncertainty entirely by constructing a continuously rebalanced portfolio. When there is no uncertainty left, the portfolio must earn the risk-free rate — and that constraint pins down the option price."
+  },
+  {
+    "objectID": "models/black_scholes.html#assumptions",
+    "href": "models/black_scholes.html#assumptions",
+    "title": "The Black-Scholes Model",
+    "section": "Assumptions",
+    "text": "Assumptions\nThe model rests on several simplifying assumptions. They are not all realistic, but they are tractable, and the model’s remarkable robustness has kept it central to options markets for over fifty years.\n\nThe underlying follows Geometric Brownian Motion. Asset prices evolve continuously and randomly, with constant drift and constant volatility.\nVolatility is constant. This is the assumption most obviously violated in practice (hence implied volatility surfaces), but it is the foundation of the analytical solution.\nNo arbitrage. There is no riskless profit available in the market.\nFrictionless markets. No transaction costs, no taxes, and the ability to buy or sell any quantity — including fractional amounts — of the underlying continuously.\nThe risk-free rate is constant. A fixed rate \\(r\\) is available for borrowing and lending.\nNo dividends (in the basic version; the Merton extension handles a continuous dividend yield \\(q\\))."
+  },
+  {
+    "objectID": "models/black_scholes.html#the-asset-price-model-geometric-brownian-motion",
+    "href": "models/black_scholes.html#the-asset-price-model-geometric-brownian-motion",
+    "title": "The Black-Scholes Model",
+    "section": "The Asset Price Model: Geometric Brownian Motion",
+    "text": "The Asset Price Model: Geometric Brownian Motion\nThe starting point is a model for how the underlying asset price \\(S_t\\) evolves over time. Black and Scholes assumed that \\(S_t\\) follows Geometric Brownian Motion (GBM):\n\\[dS_t = \\mu S_t\\, dt + \\sigma S_t\\, dW_t\\]\nLet’s unpack each term:\n\n\\(dS_t\\) is the instantaneous change in the stock price.\n\\(\\mu\\) is the drift — the expected rate of return on the stock (e.g. 8% per year). It captures the stock’s average upward trend.\n\\(\\sigma\\) is the volatility — the standard deviation of the stock’s log-returns per unit time. This is the single parameter of the Black-Scholes model.\n\\(dW_t\\) is an increment of a Wiener process (Brownian motion): a random shock drawn from \\(\\mathcal{N}(0, dt)\\) at each instant. These shocks are independent across time.\n\nThe \\(S_t\\) in front of \\(\\mu\\) and \\(\\sigma\\) makes this geometric: the uncertainty is proportional to the current price, so the stock can never go negative. This is appropriate for equity prices.\nAn important consequence of GBM is that log-returns are normally distributed. Over a finite horizon \\(T\\), the stock price at expiry satisfies:\n\\[\\ln\\!\\left(\\frac{S_T}{S_0}\\right) \\sim \\mathcal{N}\\!\\left(\\left(\\mu - \\frac{\\sigma^2}{2}\\right)T,\\ \\sigma^2 T\\right)\\]\nThe \\(-\\frac{\\sigma^2}{2}\\) term is an Itô correction: because we are taking the log of a process with multiplicative randomness, the mean of the log-return is slightly lower than the drift \\(\\mu\\). This is a consequence of Jensen’s inequality applied to the concave log function.\nEquivalently, the stock price at expiry is log-normally distributed:\n\\[S_T = S_0 \\exp\\!\\left[\\left(\\mu - \\frac{\\sigma^2}{2}\\right)T + \\sigma\\sqrt{T}\\, Z\\right], \\quad Z \\sim \\mathcal{N}(0,1)\\]"
+  },
+  {
+    "objectID": "models/black_scholes.html#risk-neutral-pricing",
+    "href": "models/black_scholes.html#risk-neutral-pricing",
+    "title": "The Black-Scholes Model",
+    "section": "Risk-Neutral Pricing",
+    "text": "Risk-Neutral Pricing\nHere is the key insight. The option price depends on \\(\\mu\\), the expected return on the stock — but \\(\\mu\\) is the hardest parameter to estimate and differs across investors. Does this mean every investor arrives at a different option price?\nNo — and this is Black-Scholes’ deepest result. By continuously trading the underlying, you can construct a replicating portfolio that perfectly matches the option’s payoff, regardless of \\(\\mu\\). The portfolio consists of a dynamically-adjusted position in the stock plus a bond. Because it replicates the option exactly, it must have the same price (by no-arbitrage).\nThe fraction of the portfolio held in the stock — the hedge ratio — turns out to be \\(\\frac{\\partial V}{\\partial S}\\), where \\(V\\) is the option value. Applying Itô’s lemma to \\(V(S_t, t)\\) and setting up the self-financing replicating portfolio eliminates the \\(dW_t\\) term entirely. The remaining equation must hold with certainty, so it must equal the risk-free rate. This yields the Black-Scholes PDE:\n\\[\\frac{\\partial V}{\\partial t} + \\frac{1}{2}\\sigma^2 S^2 \\frac{\\partial^2 V}{\\partial S^2} + rS\\frac{\\partial V}{\\partial S} - rV = 0\\]\nNotice that \\(\\mu\\) has completely dropped out. The option price does not depend on how optimistic or pessimistic you are about the stock’s expected return.\nA cleaner way to arrive at the same result is risk-neutral pricing. Because the option price does not depend on \\(\\mu\\), we are free to choose any \\(\\mu\\) we like without affecting the answer. The most convenient choice is \\(\\mu = r\\) — the risk-free rate. Under this risk-neutral measure (often denoted \\(\\mathbb{Q}\\)), all assets earn the risk-free rate in expectation, and the stock price dynamics become:\n\\[dS_t = r S_t\\, dt + \\sigma S_t\\, dW_t^{\\mathbb{Q}}\\]\nThe option price is then simply the discounted expected payoff under the risk-neutral measure:\n\\[V_0 = e^{-rT}\\, \\mathbb{E}^{\\mathbb{Q}}\\!\\left[\\text{Payoff}(S_T)\\right]\\]\nThis is intuitive: price the option as if everyone were risk-neutral (requiring only the risk-free return on all assets), then discount at the risk-free rate. The sleight of hand is that we changed the probability measure, not the actual probabilities — but since the option price doesn’t depend on the real-world drift anyway, the answer is correct.\nThis framework — the risk-neutral measure and the expectation it defines — is exactly what each pricer implements, in different ways. The closed-form pricer evaluates the expectation analytically. The Monte Carlo pricer estimates it by simulation. The binomial tree discretises the process and solves backwards."
+  },
+  {
+    "objectID": "models/black_scholes.html#the-blackscholesmodel-class",
+    "href": "models/black_scholes.html#the-blackscholesmodel-class",
+    "title": "The Black-Scholes Model",
+    "section": "The BlackScholesModel Class",
+    "text": "The BlackScholesModel Class\nBlackScholesModel holds the single free parameter of the model: \\(\\sigma\\), the constant volatility. Everything else — the current spot price, interest rates, dividends — is observable market data and lives in MarketData. The model only encodes what the BS assumption adds: that the asset’s randomness is characterised by a single, constant number.\n\nfrom options_pricer import BlackScholesModel\n\n# 20% annualised volatility\nmodel = BlackScholesModel(vol=0.20)\n\n# vol must be strictly positive — zero would degenerate the formula\n# BlackScholesModel(vol=0.0)  # raises ValueError\n\nThe model is passed to a pricer together with an instrument and market data:\n\nfrom options_pricer import (\n    BlackScholesModel, EuropeanOption, MarketData, OptionType,\n    ClosedFormPricer, MonteCarloPricer, TreePricer,\n)\n\nmodel = BlackScholesModel(vol=0.20)\nmd    = MarketData(spot=100.0, rate=0.05)\ncall  = EuropeanOption(option_type=OptionType.CALL, strike=100.0, expiry=1.0)\n\n# All three pricers accept the same (instrument, market_data, model) signature\nClosedFormPricer.price(call, md, model)              # analytical\nMonteCarloPricer(n_paths=100_000).price(call, md, model)  # simulation\nTreePricer(n_steps=200).price(call, md, model)        # tree"
+  },
+  {
+    "objectID": "models/black_scholes.html#limitations",
+    "href": "models/black_scholes.html#limitations",
+    "title": "The Black-Scholes Model",
+    "section": "Limitations",
+    "text": "Limitations\nNo model is complete without a discussion of its shortcomings:\n\nConstant volatility is the most significant failure. In practice, implied volatility varies with strike (the vol smile/skew) and term (the vol term structure). This reflects the market’s perception of tail risk and other features not captured by log-normal dynamics. The Heston model addresses this by making volatility itself a stochastic process.\nNo jumps. GBM is a continuous process; in reality, stock prices can gap discontinuously. The Merton jump-diffusion model extends BS by superimposing a Poisson jump process.\nContinuous hedging is impossible in practice. Discrete hedging introduces error proportional to gamma.\nConstant interest rates. For long-dated options, stochastic interest rates matter.\n\nDespite these limitations, Black-Scholes remains the market’s shared language. Traders quote implied volatility because it is the number you feed into the BS model to recover the market price. The model may be wrong, but it is consistently wrong in ways that practitioners have learned to navigate."
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Options Pricer Documentation",
+    "section": "",
+    "text": "Welcome to the options pricer documentation. Use the navbar to navigate between sections."
+  },
+  {
+    "objectID": "pricers/closed_form.html",
+    "href": "pricers/closed_form.html",
+    "title": "Closed-Form Pricer",
+    "section": "",
+    "text": "The Black-Scholes model tells us that option prices satisfy a particular PDE, and that the fair price is the discounted expected payoff under the risk-neutral measure:\n\\[V_0 = e^{-rT}\\,\\mathbb{E}^{\\mathbb{Q}}[\\text{Payoff}(S_T)]\\]\nWhat makes Black-Scholes special — and what occupies fifty years of options trading desks — is that this expectation has an exact, closed-form solution. You can write it down in a handful of symbols, evaluate it in microseconds, and invert it analytically for Greeks. The ClosedFormPricer implements exactly this."
+  },
+  {
+    "objectID": "pricers/closed_form.html#overview",
+    "href": "pricers/closed_form.html#overview",
+    "title": "Closed-Form Pricer",
+    "section": "",
+    "text": "The Black-Scholes model tells us that option prices satisfy a particular PDE, and that the fair price is the discounted expected payoff under the risk-neutral measure:\n\\[V_0 = e^{-rT}\\,\\mathbb{E}^{\\mathbb{Q}}[\\text{Payoff}(S_T)]\\]\nWhat makes Black-Scholes special — and what occupies fifty years of options trading desks — is that this expectation has an exact, closed-form solution. You can write it down in a handful of symbols, evaluate it in microseconds, and invert it analytically for Greeks. The ClosedFormPricer implements exactly this."
+  },
+  {
+    "objectID": "pricers/closed_form.html#the-pricing-formula",
+    "href": "pricers/closed_form.html#the-pricing-formula",
+    "title": "Closed-Form Pricer",
+    "section": "The Pricing Formula",
+    "text": "The Pricing Formula\nEvaluating \\(e^{-rT}\\,\\mathbb{E}^{\\mathbb{Q}}[\\max(S_T - K, 0)]\\) under the log-normal distribution of \\(S_T\\) gives:\nFor a European call:\n\\[C = S e^{-qT} N(d_1) - K e^{-rT} N(d_2)\\]\nFor a European put:\n\\[P = K e^{-rT} N(-d_2) - S e^{-qT} N(-d_1)\\]\nwhere \\(N(\\cdot)\\) is the standard normal CDF and:\n\\[d_1 = \\frac{\\ln\\!\\left(\\dfrac{S}{K}\\right) + \\left(r - q + \\dfrac{\\sigma^2}{2}\\right)T}{\\sigma\\sqrt{T}}, \\qquad d_2 = d_1 - \\sigma\\sqrt{T}\\]\nEvery symbol has a clear meaning: \\(S\\) is the current spot price, \\(K\\) is the strike, \\(T\\) is time to expiry in years, \\(r\\) is the continuously compounded risk-free rate, \\(q\\) is the continuous dividend yield, and \\(\\sigma\\) is the constant volatility from BlackScholesModel."
+  },
+  {
+    "objectID": "pricers/closed_form.html#interpreting-d_1-and-d_2",
+    "href": "pricers/closed_form.html#interpreting-d_1-and-d_2",
+    "title": "Closed-Form Pricer",
+    "section": "Interpreting \\(d_1\\) and \\(d_2\\)",
+    "text": "Interpreting \\(d_1\\) and \\(d_2\\)\nThe quantities \\(d_1\\) and \\(d_2\\) are standardised measures of how far in or out of the money the option is, adjusted for time and uncertainty.\n\\(d_2\\) as a probability. The cleanest interpretation is:\n\\[N(d_2) = \\mathbb{Q}[S_T &gt; K]\\]\nThis is the risk-neutral probability that the call finishes in the money. \\(N(-d_2) = 1 - N(d_2)\\) is therefore the risk-neutral probability that a put finishes in the money. Looking at the call formula: \\(Ke^{-rT}N(d_2)\\) is the present value of the strike, weighted by the probability it gets paid — exactly what you’d expect for the obligation leg of a call.\n\\(d_1\\) and the hedge ratio. The term \\(e^{-qT}N(d_1)\\) is the option’s delta — the number of shares you need to hold to replicate the option. It is close to, but not exactly, a probability. The difference between \\(d_1\\) and \\(d_2\\) is \\(\\sigma\\sqrt{T}\\): greater uncertainty (higher \\(\\sigma\\) or longer time \\(T\\)) widens the gap between them.\nMoneyness. The numerator of \\(d_1\\) is \\(\\ln(S/K) + (r - q + \\sigma^2/2)T\\). The first term, \\(\\ln(S/K)\\), is the log-moneyness — how far in or out of the money the option currently is. The second term adjusts for the expected risk-neutral growth of the stock over the option’s life. Dividing by \\(\\sigma\\sqrt{T}\\) normalises by total uncertainty."
+  },
+  {
+    "objectID": "pricers/closed_form.html#the-greeks",
+    "href": "pricers/closed_form.html#the-greeks",
+    "title": "Closed-Form Pricer",
+    "section": "The Greeks",
+    "text": "The Greeks\nThe Greeks measure the sensitivity of the option price to each input. They are the primary tools for hedging and risk management.\n\nDelta (\\(\\Delta\\))\n\\[\\Delta_{\\text{call}} = e^{-qT} N(d_1), \\qquad \\Delta_{\\text{put}} = e^{-qT}(N(d_1) - 1)\\]\nDelta is the change in option price per unit change in spot. For a call, \\(\\Delta \\in (0, 1)\\); for a put, \\(\\Delta \\in (-1, 0)\\). It is also the hedge ratio: holding \\(\\Delta\\) shares per option sold makes the combined position (instantaneously) insensitive to small spot moves.\n\n\nGamma (\\(\\Gamma\\))\n\\[\\Gamma = \\frac{e^{-qT} N'(d_1)}{S \\sigma \\sqrt{T}}\\]\nGamma is the rate of change of delta — the second derivative of option price with respect to spot. It is positive for both calls and puts and largest near the money. High gamma means the hedge ratio changes rapidly as the underlying moves, making continuous rebalancing expensive. Gamma is symmetric between calls and puts: both have the same gamma at any given spot.\n\n\nVega (\\(\\mathcal{V}\\))\n\\[\\mathcal{V} = S e^{-qT} N'(d_1) \\sqrt{T}\\]\nVega measures sensitivity to volatility. It is positive for both calls and puts: higher volatility always makes an option more valuable because it widens the range of possible outcomes. The implementation returns vega per one volatility point (divided by 100), so a vega of 0.375 means the option gains £0.375 in value if implied vol rises from 20% to 21%.\n\n\nTheta (\\(\\Theta\\))\n\\[\\Theta_{\\text{call}} = \\frac{-Se^{-qT}N'(d_1)\\sigma}{2\\sqrt{T}} - rKe^{-rT}N(d_2) + qSe^{-qT}N(d_1)\\]\nTheta is the rate of time decay — how much the option loses per day as expiry approaches, all else equal. For long vanilla options it is almost always negative: time is the enemy of the option holder. The implementation divides by 365 to express theta as a daily figure.\n\n\nRho (\\(\\rho\\))\n\\[\\rho_{\\text{call}} = K T e^{-rT} N(d_2), \\qquad \\rho_{\\text{put}} = -K T e^{-rT} N(-d_2)\\]\nRho measures sensitivity to the risk-free rate. Calls benefit from higher rates; puts are harmed. For short-dated options rho is small and often ignored. The implementation scales by 1/100, so rho is expressed per basis point (0.01%)."
+  },
+  {
+    "objectID": "pricers/closed_form.html#implied-volatility",
+    "href": "pricers/closed_form.html#implied-volatility",
+    "title": "Closed-Form Pricer",
+    "section": "Implied Volatility",
+    "text": "Implied Volatility\nThe BS formula maps \\((S, K, T, r, q, \\sigma) \\mapsto C\\). Implied volatility inverts this: given an observed market price \\(C_{\\text{mkt}}\\), find the \\(\\sigma\\) such that:\n\\[C_{\\text{BS}}(\\sigma) = C_{\\text{mkt}}\\]\nThere is no closed-form inverse, but Newton-Raphson converges in 5–10 iterations:\n\\[\\sigma_{n+1} = \\sigma_n - \\frac{C(\\sigma_n) - C_{\\text{mkt}}}{\\mathcal{V}(\\sigma_n)}\\]\nThe denominator is the vega evaluated at \\(\\sigma_n\\) — the derivative of the objective function, which is exactly what Newton-Raphson requires. The initial guess uses the Brenner-Subrahmanyam approximation \\(\\sigma_0 \\approx \\sqrt{2\\pi/T} \\cdot C/S\\), which is reasonably close for near-the-money options.\nImplied volatility is the market’s forward-looking consensus estimate of uncertainty. It is arguably the most important single number in options markets — traders quote and trade vol, not dollar prices. A volatility smile or skew arises because implied vol varies across strikes, which is a direct violation of the BS constant-vol assumption. The model acknowledges this limitation but remains the universal benchmark."
+  },
+  {
+    "objectID": "pricers/closed_form.html#put-call-parity",
+    "href": "pricers/closed_form.html#put-call-parity",
+    "title": "Closed-Form Pricer",
+    "section": "Put-Call Parity",
+    "text": "Put-Call Parity\nA fundamental constraint: for European options, put-call parity must hold exactly:\n\\[C - P = Se^{-qT} - Ke^{-rT}\\]\nThe right-hand side is the value of a forward contract to buy the stock at \\(K\\) at time \\(T\\), accounting for dividends. This relationship is model-free — it follows from no-arbitrage alone. The closed-form pricer satisfies it to numerical precision."
+  },
+  {
+    "objectID": "pricers/closed_form.html#the-closedformpricer-class",
+    "href": "pricers/closed_form.html#the-closedformpricer-class",
+    "title": "Closed-Form Pricer",
+    "section": "The ClosedFormPricer Class",
+    "text": "The ClosedFormPricer Class\nClosedFormPricer is stateless: all methods are class methods taking (instrument, market_data, model) as arguments. It never needs to be instantiated.\n\nPricing\n\nfrom options_pricer import (\n    BlackScholesModel, ClosedFormPricer, EuropeanOption, MarketData, OptionType,\n)\n\nmd    = MarketData(spot=100.0, rate=0.05)\nmodel = BlackScholesModel(vol=0.20)\ncall  = EuropeanOption(option_type=OptionType.CALL, strike=100.0, expiry=1.0)\nput   = EuropeanOption(option_type=OptionType.PUT,  strike=100.0, expiry=1.0)\n\nprint(ClosedFormPricer.price(call, md, model))  # ~10.45\nprint(ClosedFormPricer.price(put,  md, model))  # ~5.57\n\n\n\nGreeks\n\ng = ClosedFormPricer.greeks(call, md, model)\nprint(g.delta)   # ~0.637  — hedge ratio\nprint(g.gamma)   # ~0.019  — rate of change of delta\nprint(g.vega)    # ~0.375  — per 1 vol point\nprint(g.theta)   # ~-0.017 — daily time decay\nprint(g.rho)     # ~0.532  — per basis point\n\n\n\nImplied Volatility\n\n# If the ATM call is observed at 11.00, what vol does the market imply?\niv = ClosedFormPricer.implied_vol(call, md, market_price=11.00)\nprint(f\"Implied vol: {iv:.1%}\")  # ~21.5%, since 11.00 &gt; fair value of ~10.45\n\n\n\nScenario Analysis\n\nimport dataclasses\n\nbase = MarketData(spot=100.0, rate=0.05)\nmodel = BlackScholesModel(vol=0.20)\n\n# Delta across a vol surface slice\nfor vol in [0.10, 0.15, 0.20, 0.25, 0.30]:\n    m = BlackScholesModel(vol=vol)\n    g = ClosedFormPricer.greeks(call, base, m)\n    print(f\"σ={vol:.0%}  delta={g.delta:.3f}  vega={g.vega:.3f}\")"
+  },
+  {
+    "objectID": "pricers/tree.html",
+    "href": "pricers/tree.html",
+    "title": "Binomial Tree Pricer",
+    "section": "",
+    "text": "The binomial tree is a discrete-time approximation to the continuous-time Black-Scholes model. Instead of letting the stock price evolve continuously, we divide the option’s life into \\(N\\) equal time steps and assume that at each step the stock can move in exactly one of two directions: up by a factor \\(u\\), or down by a factor \\(d\\). This creates a recombining tree of possible stock prices — “recombining” because an up-move followed by a down-move lands at the same price as a down-move followed by an up-move.\nThe tree has three advantages over the closed-form pricer:\n\nGenerality: it can price instruments where no analytical solution exists — most importantly, American options with early exercise, which will be supported in a future version of this library.\nIntuition: the backward induction is a transparent, step-by-step calculation that makes the pricing logic easy to trace.\nFlexibility: non-standard payoff structures can be incorporated by modifying the terminal or intermediate payoffs."
+  },
+  {
+    "objectID": "pricers/tree.html#overview",
+    "href": "pricers/tree.html#overview",
+    "title": "Binomial Tree Pricer",
+    "section": "",
+    "text": "The binomial tree is a discrete-time approximation to the continuous-time Black-Scholes model. Instead of letting the stock price evolve continuously, we divide the option’s life into \\(N\\) equal time steps and assume that at each step the stock can move in exactly one of two directions: up by a factor \\(u\\), or down by a factor \\(d\\). This creates a recombining tree of possible stock prices — “recombining” because an up-move followed by a down-move lands at the same price as a down-move followed by an up-move.\nThe tree has three advantages over the closed-form pricer:\n\nGenerality: it can price instruments where no analytical solution exists — most importantly, American options with early exercise, which will be supported in a future version of this library.\nIntuition: the backward induction is a transparent, step-by-step calculation that makes the pricing logic easy to trace.\nFlexibility: non-standard payoff structures can be incorporated by modifying the terminal or intermediate payoffs."
+  },
+  {
+    "objectID": "pricers/tree.html#the-crr-parameterisation",
+    "href": "pricers/tree.html#the-crr-parameterisation",
+    "title": "Binomial Tree Pricer",
+    "section": "The CRR Parameterisation",
+    "text": "The CRR Parameterisation\nThe most widely used binomial tree is the Cox-Ross-Rubinstein (CRR) parameterisation, which chooses the up and down factors to match the volatility of the Black-Scholes model.\nLet the time step be \\(\\Delta t = T/N\\). The CRR factors are:\n\\[u = e^{\\sigma\\sqrt{\\Delta t}}, \\qquad d = \\frac{1}{u} = e^{-\\sigma\\sqrt{\\Delta t}}\\]\nThe choice \\(d = 1/u\\) ensures the tree recombines: after any sequence of up and down moves, the order does not matter, only the count. This keeps the number of distinct nodes at time step \\(i\\) equal to \\(i+1\\) (not \\(2^i\\)), making the algorithm computationally feasible.\nThe risk-neutral probability of an up-move is set so that the expected return under the risk-neutral measure matches the risk-free rate, net of dividends:\n\\[p = \\frac{e^{(r-q)\\Delta t} - d}{u - d}\\]\nFor \\(p\\) to be a valid probability we need \\(0 &lt; p &lt; 1\\), which holds as long as \\(d &lt; e^{(r-q)\\Delta t} &lt; u\\) — satisfied for any realistic combination of \\(r\\), \\(q\\), \\(\\sigma\\), and step count."
+  },
+  {
+    "objectID": "pricers/tree.html#building-the-tree",
+    "href": "pricers/tree.html#building-the-tree",
+    "title": "Binomial Tree Pricer",
+    "section": "Building the Tree",
+    "text": "Building the Tree\nAt expiry (step \\(N\\)), the stock can take \\(N+1\\) distinct values, indexed by the number of up-moves \\(j \\in \\{0, 1, \\ldots, N\\}\\):\n\\[S_T^{(j)} = S \\cdot u^j \\cdot d^{N-j}\\]\nwhere \\(j=0\\) gives the all-down outcome \\(S \\cdot d^N\\) (the lowest price) and \\(j=N\\) gives the all-up outcome \\(S \\cdot u^N\\) (the highest price).\nThe terminal option values are simply the payoffs:\n\\[V_N^{(j)} = \\max(S_T^{(j)} - K,\\, 0) \\quad \\text{(call)}\\] \\[V_N^{(j)} = \\max(K - S_T^{(j)},\\, 0) \\quad \\text{(put)}\\]"
+  },
+  {
+    "objectID": "pricers/tree.html#backward-induction",
+    "href": "pricers/tree.html#backward-induction",
+    "title": "Binomial Tree Pricer",
+    "section": "Backward Induction",
+    "text": "Backward Induction\nOnce the terminal values are set, we work backwards through the tree. At each step, the value at a node is the discounted expected value of the next step’s two children:\n\\[V_i^{(j)} = e^{-r\\Delta t}\\!\\left[p\\, V_{i+1}^{(j+1)} + (1-p)\\, V_{i+1}^{(j)}\\right]\\]\nHere, \\(V_{i+1}^{(j+1)}\\) is the value after an up-move and \\(V_{i+1}^{(j)}\\) is the value after a down-move. After \\(N\\) backward steps we reach the root, which contains the option price \\(V_0^{(0)}\\).\nIn the implementation, this is vectorised over all \\(j\\) simultaneously:\nV ← disc * (p * V[1:] + (1-p) * V[:-1])\nEach iteration reduces the array length by 1. After \\(N\\) iterations, the single remaining value is the price."
+  },
+  {
+    "objectID": "pricers/tree.html#convergence-to-black-scholes",
+    "href": "pricers/tree.html#convergence-to-black-scholes",
+    "title": "Binomial Tree Pricer",
+    "section": "Convergence to Black-Scholes",
+    "text": "Convergence to Black-Scholes\nAs \\(N \\to \\infty\\), the binomial tree converges to the Black-Scholes closed-form price. The convergence rate is \\(O(1/N)\\) for CRR — so doubling the number of steps halves the error. In practice, 200 steps gives accuracy within a few cents for typical options; 1000 steps reduces this to a fraction of a cent.\nThe error oscillates around the true value as \\(N\\) increases (a well-known feature of CRR), which means simply comparing prices at different step counts is more informative than trusting any single \\(N\\).\nN =  50:  error ≈ 0.04  (one step per week for a 1-year option)\nN = 200:  error ≈ 0.01\nN = 500:  error ≈ 0.004\nN = 1000: error ≈ 0.002\nRichardson extrapolation (averaging tree prices at \\(N\\) and \\(2N\\) steps) can eliminate the leading-order error term and achieve \\(O(1/N^2)\\) convergence, but this is not implemented here."
+  },
+  {
+    "objectID": "pricers/tree.html#the-treepricer-class",
+    "href": "pricers/tree.html#the-treepricer-class",
+    "title": "Binomial Tree Pricer",
+    "section": "The TreePricer Class",
+    "text": "The TreePricer Class\nTreePricer is a dataclass with a single configuration field: the number of time steps.\n\nfrom options_pricer import (\n    BlackScholesModel, EuropeanOption, MarketData, OptionType, TreePricer,\n)\n\nmd    = MarketData(spot=100.0, rate=0.05)\nmodel = BlackScholesModel(vol=0.20)\ncall  = EuropeanOption(option_type=OptionType.CALL, strike=100.0, expiry=1.0)\nput   = EuropeanOption(option_type=OptionType.PUT,  strike=100.0, expiry=1.0)\n\n# Default: 200 steps\ntree = TreePricer(n_steps=200)\nprint(tree.price(call, md, model))  # ~10.45\nprint(tree.price(put,  md, model))  # ~5.57\n\n\nComparing Accuracy Across Step Counts\n\nfrom options_pricer import ClosedFormPricer\n\nexact = ClosedFormPricer.price(call, md, model)\n\nfor n in [50, 100, 200, 500, 1000]:\n    tr = TreePricer(n_steps=n).price(call, md, model)\n    print(f\"N={n:5d}  price={tr:.5f}  error={tr - exact:+.5f}\")\n\n\n\nWith Dividends\nThe dividend yield \\(q\\) is incorporated through the risk-neutral probability \\(p = (e^{(r-q)\\Delta t} - d)/(u-d)\\). A positive dividend yield reduces \\(p\\), reflecting the drag on the stock’s expected return.\n\nmd_div = MarketData(spot=100.0, rate=0.05, div_yield=0.02)\nprint(TreePricer(n_steps=200).price(call, md_div, model))  # &lt; 10.45 (dividends lower calls)\n\n\n\nAmerican Options (Coming Soon)\nThe binomial tree is naturally suited to American options — you simply add an early exercise check at each node during the backward induction:\n\\[V_i^{(j)} = \\max\\!\\left(e^{-r\\Delta t}[p\\, V_{i+1}^{(j+1)} + (1-p)\\, V_{i+1}^{(j)}],\\; \\text{Intrinsic value}\\right)\\]\nFor an American put, the intrinsic value at node \\((i, j)\\) is \\(\\max(K - S_i^{(j)}, 0)\\). If the intrinsic value exceeds the continuation value, it is optimal to exercise early at that node. This feature will be added when AmericanOption is implemented."
+  },
+  {
+    "objectID": "pricers/monte_carlo.html",
+    "href": "pricers/monte_carlo.html",
+    "title": "Monte Carlo Pricer",
+    "section": "",
+    "text": "Monte Carlo simulation is the most general pricing method available. Unlike the closed-form pricer — which works only when the pricing integral has an analytical solution — Monte Carlo can, in principle, price any option whose payoff can be evaluated given a simulated path. The trade-off is that it is slower and produces an estimate with statistical uncertainty rather than an exact answer.\nThe core idea is to exploit the risk-neutral pricing formula directly:\n\\[V_0 = e^{-rT}\\,\\mathbb{E}^{\\mathbb{Q}}[\\text{Payoff}(S_T)]\\]\nIf we can simulate many draws of \\(S_T\\) under the risk-neutral measure \\(\\mathbb{Q}\\), we can estimate this expectation empirically by averaging the payoffs. As the number of simulated paths \\(N \\to \\infty\\), the law of large numbers guarantees convergence to the true price."
+  },
+  {
+    "objectID": "pricers/monte_carlo.html#overview",
+    "href": "pricers/monte_carlo.html#overview",
+    "title": "Monte Carlo Pricer",
+    "section": "",
+    "text": "Monte Carlo simulation is the most general pricing method available. Unlike the closed-form pricer — which works only when the pricing integral has an analytical solution — Monte Carlo can, in principle, price any option whose payoff can be evaluated given a simulated path. The trade-off is that it is slower and produces an estimate with statistical uncertainty rather than an exact answer.\nThe core idea is to exploit the risk-neutral pricing formula directly:\n\\[V_0 = e^{-rT}\\,\\mathbb{E}^{\\mathbb{Q}}[\\text{Payoff}(S_T)]\\]\nIf we can simulate many draws of \\(S_T\\) under the risk-neutral measure \\(\\mathbb{Q}\\), we can estimate this expectation empirically by averaging the payoffs. As the number of simulated paths \\(N \\to \\infty\\), the law of large numbers guarantees convergence to the true price."
+  },
+  {
+    "objectID": "pricers/monte_carlo.html#simulating-the-terminal-stock-price",
+    "href": "pricers/monte_carlo.html#simulating-the-terminal-stock-price",
+    "title": "Monte Carlo Pricer",
+    "section": "Simulating the Terminal Stock Price",
+    "text": "Simulating the Terminal Stock Price\nFor the Black-Scholes model, simulating \\(S_T\\) does not require a full path — the terminal value has a known closed-form distribution. Under the risk-neutral measure, the log-return over \\([0, T]\\) is:\n\\[\\ln\\!\\left(\\frac{S_T}{S_0}\\right) \\sim \\mathcal{N}\\!\\left(\\left(r - q - \\frac{\\sigma^2}{2}\\right)T,\\; \\sigma^2 T\\right)\\]\nNote the drift is \\(r - q\\) (the risk-free rate minus the dividend yield) rather than the real-world drift \\(\\mu\\) — this is the change of measure that eliminates dependence on investor preferences.\nSo we can sample \\(S_T\\) exactly as:\n\\[S_T = S_0 \\exp\\!\\left[\\left(r - q - \\frac{\\sigma^2}{2}\\right)T + \\sigma\\sqrt{T}\\,Z\\right], \\quad Z \\sim \\mathcal{N}(0,1)\\]\nThis is called terminal-value sampling (or direct simulation), as opposed to discretising the full path. For European options, where the payoff depends only on \\(S_T\\), it is exact — there is no discretisation error, only the statistical noise from using finite \\(N\\)."
+  },
+  {
+    "objectID": "pricers/monte_carlo.html#the-estimator",
+    "href": "pricers/monte_carlo.html#the-estimator",
+    "title": "Monte Carlo Pricer",
+    "section": "The Estimator",
+    "text": "The Estimator\nFor a call option, the discounted payoff for a single simulated path \\(i\\) is:\n\\[\\hat{V}_i = e^{-rT} \\max(S_T^{(i)} - K,\\, 0)\\]\nThe Monte Carlo estimate is the sample mean across \\(N\\) paths:\n\\[\\hat{V} = \\frac{1}{N} \\sum_{i=1}^N \\hat{V}_i\\]\nBy the central limit theorem, this estimator is approximately normally distributed around the true price \\(V_0\\):\n\\[\\hat{V} \\sim \\mathcal{N}\\!\\left(V_0,\\; \\frac{\\sigma_{\\hat{V}}^2}{N}\\right)\\]\nwhere \\(\\sigma_{\\hat{V}}\\) is the standard deviation of a single discounted payoff. The standard error of the estimate is \\(\\sigma_{\\hat{V}} / \\sqrt{N}\\), so halving the standard error requires four times as many paths. This square-root convergence is the fundamental limitation of Monte Carlo.\nFor an ATM call with \\(\\sigma = 20\\%\\) and \\(T = 1\\) year, the payoff standard deviation is roughly £15 per £100 notional, giving a standard error of about \\(15/\\sqrt{N}\\). With \\(N = 100{,}000\\) paths, the standard error is \\(\\approx 0.047\\) — so the estimate is typically within a few cents of the true value."
+  },
+  {
+    "objectID": "pricers/monte_carlo.html#the-montecarlopricer-class",
+    "href": "pricers/monte_carlo.html#the-montecarlopricer-class",
+    "title": "Monte Carlo Pricer",
+    "section": "The MonteCarloPricer Class",
+    "text": "The MonteCarloPricer Class\nMonteCarloPricer is a dataclass with two configuration fields: the number of paths and an optional random seed for reproducibility.\n\nfrom options_pricer import (\n    BlackScholesModel, EuropeanOption, MarketData, MonteCarloPricer, OptionType,\n)\n\nmd    = MarketData(spot=100.0, rate=0.05)\nmodel = BlackScholesModel(vol=0.20)\ncall  = EuropeanOption(option_type=OptionType.CALL, strike=100.0, expiry=1.0)\n\n# Default: 100,000 paths, unseeded (results vary each run)\npricer = MonteCarloPricer()\nprint(pricer.price(call, md, model))  # ~10.45, with ~0.05 standard error\n\n# Seeded for reproducibility\npricer_seeded = MonteCarloPricer(n_paths=200_000, seed=42)\nprint(pricer_seeded.price(call, md, model))  # same result every run\n\n\nReproducibility and Seeding\nThe pricer uses numpy.random.default_rng(seed) for random number generation. Passing seed=None (the default) draws a fresh seed from the OS entropy pool each time, so results will differ between runs. Passing an integer seed makes results exactly reproducible — useful for testing, debugging, or generating stable outputs in a presentation.\n\n# These will produce identical results\np1 = MonteCarloPricer(n_paths=50_000, seed=7)\np2 = MonteCarloPricer(n_paths=50_000, seed=7)\nassert p1.price(call, md, model) == p2.price(call, md, model)  # True\n\n\n\nPath Count and Accuracy\nHigher path counts reduce statistical noise. A quick rule of thumb: to achieve an accuracy of \\(\\varepsilon\\), you need roughly \\(N \\approx (\\sigma_{\\hat{V}} / \\varepsilon)^2\\) paths.\n\nfrom options_pricer import ClosedFormPricer\n\nexact = ClosedFormPricer.price(call, md, model)\n\nfor n in [1_000, 10_000, 100_000, 1_000_000]:\n    mc = MonteCarloPricer(n_paths=n, seed=42).price(call, md, model)\n    print(f\"N={n:&gt;8,}  MC={mc:.4f}  error={mc - exact:+.4f}\")\n\n\n\nWhy Monte Carlo Is Worth It\nThe closed-form pricer is faster and exact for vanilla European options. The Monte Carlo pricer shines when:\n\nThe payoff depends on the path of \\(S_t\\), not just the terminal value (barrier options, Asian options, lookbacks)\nThe model has no closed-form solution (Heston, jump-diffusion, stochastic rates)\nYou need prices for large books of options using the same set of simulated paths (a natural fit for GPU parallelisation)\n\nFor vanilla European options under Black-Scholes, Monte Carlo is mainly a sanity check against the closed-form result — but building it now means the same infrastructure extends immediately to more complex settings."
+  },
+  {
+    "objectID": "instruments/european.html",
+    "href": "instruments/european.html",
+    "title": "European Options",
+    "section": "",
+    "text": "An option is a financial derivative — a contract whose value is derived from the price of some underlying asset. The underlying can be almost anything: an equity, a stock index, a foreign currency, a commodity, even an interest rate.\nWhat makes options distinctive is the asymmetry they create. Unlike buying a stock outright, buying an option gives you the right, but not the obligation, to transact at a pre-agreed price. You pay a premium upfront for this right. If it turns out the option would cost you money to exercise, you simply don’t.\nThere are two fundamental types:\n\nA call option gives the holder the right to buy the underlying asset at the agreed price.\nA put option gives the holder the right to sell the underlying asset at the agreed price.\n\nThe pre-agreed price is called the strike (or exercise price), denoted \\(K\\). The date on which the right expires is the expiry (or maturity), denoted \\(T\\) (measured in years from today)."
+  },
+  {
+    "objectID": "instruments/european.html#what-is-an-option",
+    "href": "instruments/european.html#what-is-an-option",
+    "title": "European Options",
+    "section": "",
+    "text": "An option is a financial derivative — a contract whose value is derived from the price of some underlying asset. The underlying can be almost anything: an equity, a stock index, a foreign currency, a commodity, even an interest rate.\nWhat makes options distinctive is the asymmetry they create. Unlike buying a stock outright, buying an option gives you the right, but not the obligation, to transact at a pre-agreed price. You pay a premium upfront for this right. If it turns out the option would cost you money to exercise, you simply don’t.\nThere are two fundamental types:\n\nA call option gives the holder the right to buy the underlying asset at the agreed price.\nA put option gives the holder the right to sell the underlying asset at the agreed price.\n\nThe pre-agreed price is called the strike (or exercise price), denoted \\(K\\). The date on which the right expires is the expiry (or maturity), denoted \\(T\\) (measured in years from today)."
+  },
+  {
+    "objectID": "instruments/european.html#what-makes-an-option-european",
+    "href": "instruments/european.html#what-makes-an-option-european",
+    "title": "European Options",
+    "section": "What Makes an Option “European”?",
+    "text": "What Makes an Option “European”?\nThe term European refers to the exercise style, not the geography. A European option can only be exercised on its expiry date — not before. If you hold a European call and the underlying is trading well above the strike on day 180 of a 365-day contract, you cannot lock in that profit yet; you have to wait until day 365.\nThis is in contrast to an American option, which can be exercised at any point up to and including expiry. The added flexibility of American options makes them at least as valuable as their European counterparts, and the early-exercise feature complicates pricing considerably — there is no general closed-form solution. The Black-Scholes formula applies to European options; pricing American options typically requires numerical methods."
+  },
+  {
+    "objectID": "instruments/european.html#payoff-at-expiry",
+    "href": "instruments/european.html#payoff-at-expiry",
+    "title": "European Options",
+    "section": "Payoff at Expiry",
+    "text": "Payoff at Expiry\nThe payoff of an option at expiry depends on the relationship between the final spot price \\(S_T\\) and the strike \\(K\\).\nFor a European call:\n\\[\\text{Payoff}_{\\text{call}} = \\max(S_T - K,\\ 0)\\]\nIf the stock finishes above the strike, the holder exercises and profits \\(S_T - K\\). If it finishes below, the option expires worthless and the payoff is zero — there is no reason to buy at \\(K\\) when you can buy in the market for less.\nFor a European put:\n\\[\\text{Payoff}_{\\text{put}} = \\max(K - S_T,\\ 0)\\]\nIf the stock finishes below the strike, the holder exercises and profits \\(K - S_T\\) (selling at \\(K\\) when the market price is lower). If it finishes above, the option expires worthless.\nThe \\(\\max(\\cdot, 0)\\) structure is precisely what creates the asymmetry: losses are capped at the premium paid, while gains are theoretically unlimited (for calls) or bounded by \\(K\\) (for puts, since a stock price cannot fall below zero)."
+  },
+  {
+    "objectID": "instruments/european.html#moneyness",
+    "href": "instruments/european.html#moneyness",
+    "title": "European Options",
+    "section": "Moneyness",
+    "text": "Moneyness\nThe relationship between the current spot price \\(S\\) and the strike \\(K\\) is described by the option’s moneyness:\n\n\n\nMoneyness\nCall condition\nPut condition\n\n\n\n\nIn-the-money (ITM)\n\\(S &gt; K\\)\n\\(S &lt; K\\)\n\n\nAt-the-money (ATM)\n\\(S \\approx K\\)\n\\(S \\approx K\\)\n\n\nOut-of-the-money (OTM)\n\\(S &lt; K\\)\n\\(S &gt; K\\)\n\n\n\nAn ITM option has positive intrinsic value — what it would be worth if exercised immediately. An OTM option has zero intrinsic value, but may still have positive time value because there is a chance the underlying moves favourably before expiry.\nThe option’s total price (premium) is:\n\\[\\text{Premium} = \\underbrace{\\text{Intrinsic value}}_{\\max(S-K,\\,0) \\text{ for call}} + \\text{Time value}\\]"
+  },
+  {
+    "objectID": "instruments/european.html#the-europeanoption-class",
+    "href": "instruments/european.html#the-europeanoption-class",
+    "title": "European Options",
+    "section": "The EuropeanOption Class",
+    "text": "The EuropeanOption Class\nThe EuropeanOption dataclass represents the contract specification — it captures the terms agreed at inception, independent of what the market is doing today.\n\nfrom options_pricer import EuropeanOption, OptionType\n\n# A call option with strike 105, expiring in 6 months (0.5 years)\ncall = EuropeanOption(option_type=OptionType.CALL, strike=105.0, expiry=0.5)\n\n# A put option with strike 95, expiring in 1 year\nput = EuropeanOption(option_type=OptionType.PUT, strike=95.0, expiry=1.0)\n\n# OptionType can also be passed as a plain string\ncall_alt = EuropeanOption(option_type=\"call\", strike=105.0, expiry=0.5)\n\nThe constructor validates both fields on creation:\n\n# These will both raise ValueError\nEuropeanOption(option_type=OptionType.CALL, strike=-10.0, expiry=1.0)   # negative strike\nEuropeanOption(option_type=OptionType.CALL, strike=100.0, expiry=0.0)   # zero expiry\n\nEuropeanOption represents the contract only — it says nothing about what the underlying is currently trading at, what interest rates are, or what volatility looks like. Those inputs live in MarketData. The separation means you can reprice the same contract against many different market scenarios without recreating it.\n\nfrom options_pricer import BlackScholes, MarketData\n\ncontract = EuropeanOption(option_type=OptionType.CALL, strike=100.0, expiry=1.0)\n\n# Price under baseline market conditions\nmd_base = MarketData(spot=100.0, rate=0.05, vol=0.20)\nprint(BlackScholes.price(contract, md_base))\n\n# Price if volatility spikes to 40%\nmd_high_vol = MarketData(spot=100.0, rate=0.05, vol=0.40)\nprint(BlackScholes.price(contract, md_high_vol))"
+  },
+  {
+    "objectID": "market/market_data.html",
+    "href": "market/market_data.html",
+    "title": "Market Data",
+    "section": "",
+    "text": "Pricing an option requires two distinct types of input. The first is the contract specification — the strike, expiry, and option type defined in EuropeanOption. The second is a snapshot of observable market conditions at the moment of pricing: where is the underlying trading, what are interest rates, what is the dividend yield? These inputs live in MarketData.\nNote that volatility is not in MarketData. Volatility is a parameter of the stochastic model assumed to drive the underlying — it belongs on the model (e.g. BlackScholesModel), not on the market. This distinction becomes important as the library expands: the Heston model has multiple volatility-related parameters, and none of them are “market observables” in the same sense that spot price or interest rates are.\nThe separation matters: the contract is fixed once written, while market conditions change continuously. Holding the contract and model constant while varying MarketData is how you run scenario analyses and stress tests."
+  },
+  {
+    "objectID": "market/market_data.html#overview",
+    "href": "market/market_data.html#overview",
+    "title": "Market Data",
+    "section": "",
+    "text": "Pricing an option requires two distinct types of input. The first is the contract specification — the strike, expiry, and option type defined in EuropeanOption. The second is a snapshot of observable market conditions at the moment of pricing: where is the underlying trading, what are interest rates, what is the dividend yield? These inputs live in MarketData.\nNote that volatility is not in MarketData. Volatility is a parameter of the stochastic model assumed to drive the underlying — it belongs on the model (e.g. BlackScholesModel), not on the market. This distinction becomes important as the library expands: the Heston model has multiple volatility-related parameters, and none of them are “market observables” in the same sense that spot price or interest rates are.\nThe separation matters: the contract is fixed once written, while market conditions change continuously. Holding the contract and model constant while varying MarketData is how you run scenario analyses and stress tests."
+  },
+  {
+    "objectID": "market/market_data.html#the-inputs",
+    "href": "market/market_data.html#the-inputs",
+    "title": "Market Data",
+    "section": "The Inputs",
+    "text": "The Inputs\n\nSpot Price (\\(S\\))\nThe spot price is the current market price of the underlying asset — the price at which you could buy or sell it right now. It is the most direct input to the option price: a call becomes more valuable as the underlying rises (you are closer to, or further into, the money), and a put becomes more valuable as it falls.\nSpot is always strictly positive; a negative price is not economically meaningful.\n\n\nRisk-Free Rate (\\(r\\))\nThe risk-free rate represents the return available on a riskless investment over the option’s life. In practice, this is typically proxied by:\n\nGovernment bond yields (e.g. US Treasuries, UK Gilts) for longer-dated options\nOvernight index swap (OIS) rates or SOFR for shorter tenors\n\nIn the Black-Scholes framework, \\(r\\) is expressed as a continuously compounded annual rate. Continuous compounding might feel unfamiliar if you are used to annual or quarterly rates, but it simplifies the mathematics considerably. The two are related by:\n\\[r_{\\text{cont}} = \\ln\\!\\left(1 + r_{\\text{annual}}\\right)\\]\nSo a 5% annually compounded rate corresponds to \\(r_{\\text{cont}} = \\ln(1.05) \\approx 4.879\\%\\).\nThe risk-free rate enters option pricing via the discounting of future cash flows: a payoff received at time \\(T\\) in the future is worth \\(e^{-rT}\\) today. It also captures the cost of carry — owning the underlying instead of a risk-free bond has an opportunity cost, which matters when constructing the replicating portfolio underlying the Black-Scholes argument.\nThe rate can be negative (as has been observed in various economies post-2008 and post-COVID), which the model handles without issue.\n\n\nDividend Yield (\\(q\\))\nThe continuous dividend yield accounts for income paid by the underlying asset during the option’s life. For equities, dividends reduce the stock price on the ex-dividend date — a call holder misses out on this income (since they do not own the stock), while a put holder benefits.\nIn the Merton (1973) extension of Black-Scholes, dividends are modelled as a continuous yield \\(q\\): the stock is assumed to continuously bleed value at rate \\(q\\). The effective forward price of the stock becomes \\(Se^{(r-q)T}\\) rather than \\(Se^{rT}\\). This substitution flows through the entire pricing formula.\nFor many practical applications — liquid equities, indices, and forex (where \\(q\\) represents the foreign interest rate) — the continuous yield is a reasonable approximation. For individual stocks paying lumpy quarterly dividends, more sophisticated adjustments are needed, but that is beyond the scope of this model.\nThe default is \\(q = 0\\), which is appropriate for non-dividend-paying assets. It can also take negative values in principle, though this is economically unusual."
+  },
+  {
+    "objectID": "market/market_data.html#the-marketdata-class",
+    "href": "market/market_data.html#the-marketdata-class",
+    "title": "Market Data",
+    "section": "The MarketData Class",
+    "text": "The MarketData Class\n\nfrom options_pricer import MarketData\n\n# Non-dividend-paying asset: spot=100, rate=5%\nmd = MarketData(spot=100.0, rate=0.05)\n\n# With a 2% continuous dividend yield\nmd_div = MarketData(spot=100.0, rate=0.05, div_yield=0.02)\n\n# Negative rates are valid\nmd_neg_rate = MarketData(spot=100.0, rate=-0.005)\n\nInvalid inputs raise ValueError at construction, not at pricing time:\n\n# These will raise ValueError\nMarketData(spot=0.0,   rate=0.05)   # spot must be positive\nMarketData(spot=-50.0, rate=0.05)   # spot must be positive"
+  },
+  {
+    "objectID": "market/market_data.html#using-marketdata-for-scenario-analysis",
+    "href": "market/market_data.html#using-marketdata-for-scenario-analysis",
+    "title": "Market Data",
+    "section": "Using MarketData for Scenario Analysis",
+    "text": "Using MarketData for Scenario Analysis\nBecause MarketData is a plain dataclass, running scenarios is straightforward. Use dataclasses.replace() to create variants with one field changed:\n\nfrom options_pricer import (\n    BlackScholesModel, ClosedFormPricer, EuropeanOption, MarketData, OptionType,\n)\nimport dataclasses\n\ncontract = EuropeanOption(option_type=OptionType.CALL, strike=100.0, expiry=1.0)\nmodel    = BlackScholesModel(vol=0.20)\nbase     = MarketData(spot=100.0, rate=0.05)\n\n# Price across a range of spot levels\nfor spot in [80, 90, 95, 100, 105, 110, 120]:\n    md = dataclasses.replace(base, spot=float(spot))\n    print(f\"S={spot:3d}  price={ClosedFormPricer.price(contract, md, model):.4f}\")\n\ndataclasses.replace() creates a new MarketData with one field changed, leaving the rest intact — a clean pattern for sensitivity analysis without mutating any existing objects."
+  }
+]
