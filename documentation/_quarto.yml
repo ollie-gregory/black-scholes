@@ -11,11 +11,21 @@ website:
       - text: "Market"
         href: market/market_data.qmd
       - text: "Models"
-        href: models/black_scholes.qmd
+        menu:
+          - text: "Black-Scholes"
+            href: models/black_scholes.qmd
+      - text: "Pricers"
+        menu:
+          - text: "Closed Form"
+            href: pricers/closed_form.qmd
+          - text: "Monte Carlo"
+            href: pricers/monte_carlo.qmd
+          - text: "Binomial Tree"
+            href: pricers/tree.qmd
 
 format:
   html:
-    theme: cosmo
+    theme: vapor
     toc: true
   pdf:
     toc: true

@@ -1,0 +1,161 @@
+---
+title: "Closed-Form Pricer"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+---
+
+## Overview
+
+The [Black-Scholes model](../models/black_scholes.qmd) tells us that option prices satisfy a particular PDE, and that the fair price is the discounted expected payoff under the risk-neutral measure:
+
+$$V_0 = e^{-rT}\,\mathbb{E}^{\mathbb{Q}}[\text{Payoff}(S_T)]$$
+
+What makes Black-Scholes special — and what occupies fifty years of options trading desks — is that this expectation has an exact, closed-form solution. You can write it down in a handful of symbols, evaluate it in microseconds, and invert it analytically for Greeks. The `ClosedFormPricer` implements exactly this.
+
+## The Pricing Formula
+
+Evaluating $e^{-rT}\,\mathbb{E}^{\mathbb{Q}}[\max(S_T - K, 0)]$ under the log-normal distribution of $S_T$ gives:
+
+For a **European call**:
+
+$$C = S e^{-qT} N(d_1) - K e^{-rT} N(d_2)$$
+
+For a **European put**:
+
+$$P = K e^{-rT} N(-d_2) - S e^{-qT} N(-d_1)$$
+
+where $N(\cdot)$ is the **standard normal CDF** and:
+
+$$d_1 = \frac{\ln\!\left(\dfrac{S}{K}\right) + \left(r - q + \dfrac{\sigma^2}{2}\right)T}{\sigma\sqrt{T}}, \qquad d_2 = d_1 - \sigma\sqrt{T}$$
+
+Every symbol has a clear meaning: $S$ is the current spot price, $K$ is the strike, $T$ is time to expiry in years, $r$ is the continuously compounded risk-free rate, $q$ is the continuous dividend yield, and $\sigma$ is the constant volatility from `BlackScholesModel`.
+
+## Interpreting $d_1$ and $d_2$
+
+The quantities $d_1$ and $d_2$ are standardised measures of how far in or out of the money the option is, adjusted for time and uncertainty.
+
+**$d_2$ as a probability.** The cleanest interpretation is:
+
+$$N(d_2) = \mathbb{Q}[S_T > K]$$
+
+This is the **risk-neutral probability** that the call finishes in the money. $N(-d_2) = 1 - N(d_2)$ is therefore the risk-neutral probability that a put finishes in the money. Looking at the call formula: $Ke^{-rT}N(d_2)$ is the present value of the strike, weighted by the probability it gets paid — exactly what you'd expect for the obligation leg of a call.
+
+**$d_1$ and the hedge ratio.** The term $e^{-qT}N(d_1)$ is the option's **delta** — the number of shares you need to hold to replicate the option. It is close to, but not exactly, a probability. The difference between $d_1$ and $d_2$ is $\sigma\sqrt{T}$: greater uncertainty (higher $\sigma$ or longer time $T$) widens the gap between them.
+
+**Moneyness.** The numerator of $d_1$ is $\ln(S/K) + (r - q + \sigma^2/2)T$. The first term, $\ln(S/K)$, is the log-moneyness — how far in or out of the money the option currently is. The second term adjusts for the expected risk-neutral growth of the stock over the option's life. Dividing by $\sigma\sqrt{T}$ normalises by total uncertainty.
+
+## The Greeks
+
+The **Greeks** measure the sensitivity of the option price to each input. They are the primary tools for hedging and risk management.
+
+### Delta ($\Delta$)
+
+$$\Delta_{\text{call}} = e^{-qT} N(d_1), \qquad \Delta_{\text{put}} = e^{-qT}(N(d_1) - 1)$$
+
+Delta is the change in option price per unit change in spot. For a call, $\Delta \in (0, 1)$; for a put, $\Delta \in (-1, 0)$. It is also the hedge ratio: holding $\Delta$ shares per option sold makes the combined position (instantaneously) insensitive to small spot moves.
+
+### Gamma ($\Gamma$)
+
+$$\Gamma = \frac{e^{-qT} N'(d_1)}{S \sigma \sqrt{T}}$$
+
+Gamma is the rate of change of delta — the second derivative of option price with respect to spot. It is positive for both calls and puts and largest near the money. High gamma means the hedge ratio changes rapidly as the underlying moves, making continuous rebalancing expensive. Gamma is symmetric between calls and puts: both have the same gamma at any given spot.
+
+### Vega ($\mathcal{V}$)
+
+$$\mathcal{V} = S e^{-qT} N'(d_1) \sqrt{T}$$
+
+Vega measures sensitivity to volatility. It is positive for both calls and puts: higher volatility always makes an option more valuable because it widens the range of possible outcomes. The implementation returns vega *per one volatility point* (divided by 100), so a vega of 0.375 means the option gains £0.375 in value if implied vol rises from 20% to 21%.
+
+### Theta ($\Theta$)
+
+$$\Theta_{\text{call}} = \frac{-Se^{-qT}N'(d_1)\sigma}{2\sqrt{T}} - rKe^{-rT}N(d_2) + qSe^{-qT}N(d_1)$$
+
+Theta is the rate of time decay — how much the option loses per day as expiry approaches, all else equal. For long vanilla options it is almost always negative: time is the enemy of the option holder. The implementation divides by 365 to express theta as a daily figure.
+
+### Rho ($\rho$)
+
+$$\rho_{\text{call}} = K T e^{-rT} N(d_2), \qquad \rho_{\text{put}} = -K T e^{-rT} N(-d_2)$$
+
+Rho measures sensitivity to the risk-free rate. Calls benefit from higher rates; puts are harmed. For short-dated options rho is small and often ignored. The implementation scales by 1/100, so rho is expressed per basis point (0.01%).
+
+## Implied Volatility
+
+The BS formula maps $(S, K, T, r, q, \sigma) \mapsto C$. **Implied volatility** inverts this: given an observed market price $C_{\text{mkt}}$, find the $\sigma$ such that:
+
+$$C_{\text{BS}}(\sigma) = C_{\text{mkt}}$$
+
+There is no closed-form inverse, but **Newton-Raphson** converges in 5–10 iterations:
+
+$$\sigma_{n+1} = \sigma_n - \frac{C(\sigma_n) - C_{\text{mkt}}}{\mathcal{V}(\sigma_n)}$$
+
+The denominator is the vega evaluated at $\sigma_n$ — the derivative of the objective function, which is exactly what Newton-Raphson requires. The initial guess uses the Brenner-Subrahmanyam approximation $\sigma_0 \approx \sqrt{2\pi/T} \cdot C/S$, which is reasonably close for near-the-money options.
+
+Implied volatility is the market's forward-looking consensus estimate of uncertainty. It is arguably the most important single number in options markets — traders quote and trade vol, not dollar prices. A **volatility smile** or **skew** arises because implied vol varies across strikes, which is a direct violation of the BS constant-vol assumption. The model acknowledges this limitation but remains the universal benchmark.
+
+## Put-Call Parity
+
+A fundamental constraint: for European options, put-call parity must hold exactly:
+
+$$C - P = Se^{-qT} - Ke^{-rT}$$
+
+The right-hand side is the value of a forward contract to buy the stock at $K$ at time $T$, accounting for dividends. This relationship is model-free — it follows from no-arbitrage alone. The closed-form pricer satisfies it to numerical precision.
+
+## The `ClosedFormPricer` Class
+
+`ClosedFormPricer` is stateless: all methods are class methods taking `(instrument, market_data, model)` as arguments. It never needs to be instantiated.
+
+### Pricing
+
+```{python}
+#| eval: false
+from options_pricer import (
+    BlackScholesModel, ClosedFormPricer, EuropeanOption, MarketData, OptionType,
+)
+
+md    = MarketData(spot=100.0, rate=0.05)
+model = BlackScholesModel(vol=0.20)
+call  = EuropeanOption(option_type=OptionType.CALL, strike=100.0, expiry=1.0)
+put   = EuropeanOption(option_type=OptionType.PUT,  strike=100.0, expiry=1.0)
+
+print(ClosedFormPricer.price(call, md, model))  # ~10.45
+print(ClosedFormPricer.price(put,  md, model))  # ~5.57
+```
+
+### Greeks
+
+```{python}
+#| eval: false
+g = ClosedFormPricer.greeks(call, md, model)
+print(g.delta)   # ~0.637  — hedge ratio
+print(g.gamma)   # ~0.019  — rate of change of delta
+print(g.vega)    # ~0.375  — per 1 vol point
+print(g.theta)   # ~-0.017 — daily time decay
+print(g.rho)     # ~0.532  — per basis point
+```
+
+### Implied Volatility
+
+```{python}
+#| eval: false
+# If the ATM call is observed at 11.00, what vol does the market imply?
+iv = ClosedFormPricer.implied_vol(call, md, market_price=11.00)
+print(f"Implied vol: {iv:.1%}")  # ~21.5%, since 11.00 > fair value of ~10.45
+```
+
+### Scenario Analysis
+
+```{python}
+#| eval: false
+import dataclasses
+
+base = MarketData(spot=100.0, rate=0.05)
+model = BlackScholesModel(vol=0.20)
+
+# Delta across a vol surface slice
+for vol in [0.10, 0.15, 0.20, 0.25, 0.30]:
+    m = BlackScholesModel(vol=vol)
+    g = ClosedFormPricer.greeks(call, base, m)
+    print(f"σ={vol:.0%}  delta={g.delta:.3f}  vega={g.vega:.3f}")
+```

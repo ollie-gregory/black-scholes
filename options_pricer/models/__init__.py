@@ -1,3 +1,5 @@
-from .black_scholes import BlackScholes
+from .black_scholes import BlackScholesModel
+from .heston import HestonModel
+from .merton import MertonModel
 
-__all__ = ["BlackScholes"]
+__all__ = ["BlackScholesModel", "HestonModel", "MertonModel"]
