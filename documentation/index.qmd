@@ -1,0 +1,5 @@
+---
+title: "Options Pricer Documentation"
+---
+
+Welcome to the options pricer documentation. Use the navbar to navigate between sections.

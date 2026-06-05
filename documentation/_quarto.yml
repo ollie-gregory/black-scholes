@@ -1,0 +1,22 @@
+project:
+  type: website
+  output-dir: _site
+
+website:
+  title: "Options Pricer"
+  navbar:
+    left:
+      - text: "Instruments"
+        href: instruments/european.qmd
+      - text: "Market"
+        href: market/market_data.qmd
+      - text: "Models"
+        href: models/black_scholes.qmd
+
+format:
+  html:
+    theme: cosmo
+    toc: true
+  pdf:
+    toc: true
+    number-sections: true

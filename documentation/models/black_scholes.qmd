@@ -1,0 +1,10 @@
+---
+title: "Black-Scholes Model"
+author: "Oliver Gregory"
+date: "2025-06-05"
+format:
+  html:
+    toc: true
+  pdf:
+    toc: true
+---
