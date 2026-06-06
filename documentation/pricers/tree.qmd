@@ -116,10 +116,41 @@ md_div = MarketData(spot=100.0, rate=0.05, div_yield=0.02)
 print(TreePricer(n_steps=200).price(call, md_div, model))  # < 10.45 (dividends lower calls)
 ```
 
-### American Options (Coming Soon)
+### American Options
 
-The binomial tree is naturally suited to American options — you simply add an early exercise check at each node during the backward induction:
+The binomial tree extends naturally to American options. During backward induction, each node represents a decision point: the holder can either continue holding (continuation value) or exercise immediately (intrinsic value). The American option value at node $(i, j)$ is:
 
-$$V_i^{(j)} = \max\!\left(e^{-r\Delta t}[p\, V_{i+1}^{(j+1)} + (1-p)\, V_{i+1}^{(j)}],\; \text{Intrinsic value}\right)$$
+$$V_i^{(j)} = \max\!\left(e^{-r\Delta t}\!\left[p\, V_{i+1}^{(j+1)} + (1-p)\, V_{i+1}^{(j)}\right],\; h_i^{(j)}\right)$$
 
-For an American put, the intrinsic value at node $(i, j)$ is $\max(K - S_i^{(j)}, 0)$. If the intrinsic value exceeds the continuation value, it is optimal to exercise early at that node. This feature will be added when `AmericanOption` is implemented.
+where $h_i^{(j)}$ is the intrinsic value at that node:
+
+$$h_i^{(j)} = \max\!\left(K - S_i^{(j)},\; 0\right) \quad \text{(put)}, \qquad h_i^{(j)} = \max\!\left(S_i^{(j)} - K,\; 0\right) \quad \text{(call)}$$
+
+In the implementation, the stock price at level $i$ (measuring steps from the root) is reconstructed from the up/down factors:
+
+$$S_i^{(j)} = S \cdot u^j \cdot d^{i-j}, \qquad j = 0, 1, \ldots, i$$
+
+The backward induction loop becomes:
+
+```
+for k = 1, ..., N:
+    v ← disc * (p * v[1:] + (1-p) * v[:-1])   # continuation
+    if American:
+        step ← N - k
+        s_nodes ← S * u^j * d^(step-j)  for j = 0..step
+        v ← max(v, intrinsic(s_nodes))          # early exercise
+```
+
+This single extra line per step is the only change from the European tree.
+
+```{python}
+#| eval: false
+from options_pricer import AmericanOption, BlackScholesModel, MarketData, OptionType, TreePricer
+
+md    = MarketData(spot=100.0, rate=0.05)
+model = BlackScholesModel(vol=0.20)
+am_put = AmericanOption(option_type=OptionType.PUT, strike=100.0, expiry=1.0)
+
+# Early exercise premium: American > European by ~0.32
+print(TreePricer(n_steps=500).price(am_put, md, model))  # ~5.89
+```

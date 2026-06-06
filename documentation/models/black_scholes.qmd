@@ -4,9 +4,51 @@ title: "The Black-Scholes Model"
 
 ## The Problem
 
-Before Black, Scholes, and Merton published their work in 1973, there was no rigorous, universally accepted method for pricing options. Practitioners used rules of thumb. The fundamental question — *what is the fair price of the right to buy a stock at a fixed price on a fixed future date?* — had no clean answer.
+Before Black, Scholes, and Merton published their work in 1973, there was no rigorous, universally accepted method for pricing options. Practitioners used rules of thumb. The fundamental question of *'what is the fair price of the right to buy a stock at a fixed price on a fixed future date?'* had no clean answer.
 
-The difficulty is that options are non-linear instruments. The payoff of a call, $\max(S_T - K, 0)$, is not proportional to the underlying. And the fair price today must somehow reflect the full distribution of possible stock prices at expiry — which is itself uncertain. The insight of Black, Scholes, and Merton was to show that, under certain assumptions, you can *eliminate* this uncertainty entirely by constructing a continuously rebalanced portfolio. When there is no uncertainty left, the portfolio must earn the risk-free rate — and that constraint pins down the option price.
+The difficulty is that options are non-linear instruments, i.e., the payoff of a call, $\max(S_T - K, 0) - p$, is not proportional to the underlying asset value. Along with this, the fair price today must somehow reflect the full distribution of possible stock prices at expiry, which is itself uncertain. The insight of Black, Scholes, and Merton was to show that, under certain assumptions, you can *eliminate* this uncertainty entirely by constructing a *continuously rebalanced portfolio*. When there is no uncertainty left, the portfolio **must** earn the risk-free rate and that constraint pins down the option price.
+
+```{python}
+#| label: fig-payoffs
+#| fig-cap: "Profit / loss at expiry for a European call and put (K = £100, premium = £5)"
+#| echo: false
+import numpy as np
+import matplotlib.pyplot as plt
+
+plt.rcParams['font.family'] = 'PT Serif'
+
+K       = 100  # strike price
+premium = 5    # option cost
+
+S = np.linspace(50, 150, 500)
+
+call_pnl = np.maximum(S - K, 0) - premium
+put_pnl  = np.maximum(K - S, 0) - premium
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(8, 3))
+
+for ax, pnl, color, label, breakeven, ylabel in [
+    (ax1, call_pnl, "#2563eb", "European Call — P&L at Expiry", K + premium,
+     "P&L  $\\max(S_T - K,\\, 0) - p$"),
+    (ax2, put_pnl,  "#dc2626", "European Put — P&L at Expiry",  K - premium,
+     "P&L  $\\max(K - S_T,\\, 0) - p$"),
+]:
+    ax.axhline(0, color="black", linewidth=0.8)
+    ax.axvline(K, color="gray", linestyle="--", linewidth=1, label=f"Strike K = £{K}")
+    ax.axvline(breakeven, color="gray", linestyle=":", linewidth=1.2,
+               label=f"Break-even £{breakeven}")
+    ax.plot(S, pnl, color=color, linewidth=2)
+    ax.fill_between(S, pnl, 0, where=(pnl >= 0), alpha=0.12, color=color,  label="Profit")
+    ax.fill_between(S, pnl, 0, where=(pnl <  0), alpha=0.12, color="gray", label="Loss")
+    ax.set_title(label)
+    ax.set_xlabel("Stock Price $S_T$ (£)")
+    ax.set_ylabel(ylabel)
+    ax.legend(fontsize=8)
+    ax.set_xlim(50, 150)
+
+fig.tight_layout()
+plt.show()
+```
 
 ## Assumptions
 

@@ -8,7 +8,11 @@ website:
   navbar:
     left:
       - text: "Instruments"
-        href: instruments/european.qmd
+        menu:
+          - text: "European"
+            href: instruments/european.qmd
+          - text: "American"
+            href: instruments/american.qmd
       - text: "Market"
         href: market/market_data.qmd
       - text: "Models"
@@ -23,6 +27,8 @@ website:
             href: pricers/monte_carlo.qmd
           - text: "Binomial Tree"
             href: pricers/tree.qmd
+          - text: "Finite Differences"
+            href: pricers/finite_differences.qmd
 
 format:
   html:

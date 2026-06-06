@@ -5,6 +5,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
+from ..instruments.american import AmericanOption
 from ..instruments.base import OptionType
 from ..instruments.european import EuropeanOption
 from ..market.market_data import MarketData
@@ -19,7 +20,7 @@ class TreePricer:
 
     def price(
         self,
-        inst: EuropeanOption,
+        inst: EuropeanOption | AmericanOption,
         md: MarketData,
         model: BlackScholesModel,
     ) -> float:
@@ -41,8 +42,17 @@ class TreePricer:
         else:
             v = np.maximum(inst.strike - s_t, 0.0)
 
-        # Backward induction: reduce N+1 values to 1 over N steps
-        for _ in range(N):
+        # Backward induction: reduce N+1 values to 1 over N steps.
+        # For American options, apply early exercise at each level.
+        for k in range(1, N + 1):
             v = disc * (p * v[1:] + (1 - p) * v[:-1])
+            if isinstance(inst, AmericanOption):
+                step = N - k  # number of steps from the root
+                j = np.arange(step + 1)
+                s_nodes = md.spot * (u**j) * (d ** (step - j))
+                if inst.option_type is OptionType.CALL:
+                    v = np.maximum(v, s_nodes - inst.strike)
+                else:
+                    v = np.maximum(v, inst.strike - s_nodes)
 
         return float(v[0])

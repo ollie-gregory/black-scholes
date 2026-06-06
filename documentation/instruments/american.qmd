@@ -1,0 +1,101 @@
+---
+title: "American Option"
+---
+
+## What Makes an Option "American"?
+
+An **American option** grants the holder the right to exercise at any time up to and including the expiry date $T$. This is in contrast to a **European option**, which can only be exercised at expiry.
+
+The flexibility to exercise early means an American option is always worth at least as much as the equivalent European option. The difference is called the **early exercise premium**:
+
+$$V_{\text{American}} \geq V_{\text{European}}$$
+
+## The Intrinsic Value Floor
+
+At any time $t$, the holder of an American option can exercise immediately and receive the intrinsic value. Because the option can always be surrendered for the intrinsic value, the price must satisfy:
+
+$$V(S, t) \geq \max(S - K,\; 0) \quad \text{(call)}$$
+$$V(S, t) \geq \max(K - S,\; 0) \quad \text{(put)}$$
+
+This floor is enforced at every node of the binomial tree, at every time step of the finite differences grid, and as a final floor in the Monte Carlo pricer.
+
+## When Is Early Exercise Optimal?
+
+### American Puts
+
+For a put, early exercise becomes attractive when the option is sufficiently deep in-the-money. The intuition: if you hold a put with $K = 100$ on a stock currently at $S = 50$, you are owed $50 in intrinsic value. Waiting means:
+
+- **Benefit**: the stock might fall further, increasing the payoff
+- **Cost**: you forgo the interest you could earn by investing the $50 proceeds now
+
+When the interest rate $r$ is high and the option is deep enough in-the-money, the cost of waiting exceeds the benefit. Early exercise becomes optimal at the **early exercise boundary** $S^*(t)$ — the stock price below which the put should be exercised immediately.
+
+### American Calls — No Dividends
+
+For a call on a **non-dividend-paying stock**, it is never optimal to exercise early. The argument is straightforward: holding the call is always at least as valuable as exercising it, because:
+
+1. Exercising forfeits the remaining optionality ("insurance" against the stock falling)
+2. The time value of delaying the strike payment $K$ is positive
+
+This is a classical result: an American call on a non-dividend stock has the same price as the corresponding European call.
+
+$$V_{\text{Am. call}} = V_{\text{Eur. call}} \quad \text{when } q = 0$$
+
+### American Calls — With Dividends
+
+When the stock pays a **continuous dividend yield** $q > 0$, holding the call means missing out on dividend income. For a sufficiently large dividend yield and deep in-the-money call, it can be optimal to exercise just before a large dividend payment. The early exercise premium for a call therefore depends on $q$.
+
+## Put-Call Parity Breaks Down
+
+For European options, put-call parity gives an exact relationship:
+
+$$C_{\text{Eur}} - P_{\text{Eur}} = S e^{-qT} - K e^{-rT}$$
+
+For American options, only an inequality holds:
+
+$$S e^{-qT} - K \leq C_{\text{Am}} - P_{\text{Am}} \leq S - K e^{-rT}$$
+
+This means you cannot back out an American option price analytically from its counterpart via parity. Each side (call and put) must be priced independently.
+
+## No Analytical Solution
+
+There is no closed-form formula for American option prices under the Black-Scholes model (except for the special case of a perpetual American put). Pricing requires numerical methods:
+
+| Method | Description |
+|--------|-------------|
+| Binomial tree | Backward induction with early exercise check at each node |
+| Finite differences | Solve the BS PDE with a free boundary (LCP) |
+| Monte Carlo (LSM) | Longstaff-Schwartz regression-based optimal stopping |
+
+## The `AmericanOption` Class
+
+`AmericanOption` has the same interface as `EuropeanOption` — the distinction is purely about exercise style.
+
+```{python}
+#| eval: false
+from options_pricer import AmericanOption, OptionType
+
+# ATM 1-year put
+put = AmericanOption(option_type=OptionType.PUT, strike=100.0, expiry=1.0)
+
+# String coercion also works
+call = AmericanOption(option_type="call", strike=100.0, expiry=0.5)
+```
+
+Validation mirrors `EuropeanOption`: both `strike` and `expiry` must be strictly positive.
+
+```{python}
+#| eval: false
+from options_pricer import AmericanOption, BlackScholesModel, FiniteDifferencesPricer, MarketData, OptionType, TreePricer
+
+md    = MarketData(spot=100.0, rate=0.05)
+model = BlackScholesModel(vol=0.20)
+
+put = AmericanOption(option_type=OptionType.PUT, strike=100.0, expiry=1.0)
+
+# Tree: ~5.89  (vs European ~5.57 — early exercise premium ≈ 0.32)
+print(TreePricer(n_steps=500).price(put, md, model))
+
+# Finite differences: ~5.89
+print(FiniteDifferencesPricer().price(put, md, model))
+```
