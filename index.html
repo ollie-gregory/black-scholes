@@ -91,10 +91,21 @@ ul.task-list li input[type="checkbox"] {
 </button>
           <div class="collapse navbar-collapse" id="navbarCollapse">
             <ul class="navbar-nav navbar-nav-scroll me-auto">
-  <li class="nav-item">
-    <a class="nav-link" href="./instruments/european.html"> 
-<span class="menu-text">Instruments</span></a>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-instruments" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Instruments</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-instruments">    
+        <li>
+    <a class="dropdown-item" href="./instruments/european.html">
+ <span class="dropdown-text">European</span></a>
   </li>  
+        <li>
+    <a class="dropdown-item" href="./instruments/american.html">
+ <span class="dropdown-text">American</span></a>
+  </li>  
+    </ul>
+  </li>
   <li class="nav-item">
     <a class="nav-link" href="./market/market_data.html"> 
 <span class="menu-text">Market</span></a>
@@ -126,6 +137,10 @@ ul.task-list li input[type="checkbox"] {
         <li>
     <a class="dropdown-item" href="./pricers/tree.html">
  <span class="dropdown-text">Binomial Tree</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./pricers/finite_differences.html">
+ <span class="dropdown-text">Finite Differences</span></a>
   </li>  
     </ul>
   </li>

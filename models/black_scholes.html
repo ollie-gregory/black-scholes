@@ -155,10 +155,21 @@ window.Quarto = {
 </button>
           <div class="collapse navbar-collapse" id="navbarCollapse">
             <ul class="navbar-nav navbar-nav-scroll me-auto">
-  <li class="nav-item">
-    <a class="nav-link" href="../instruments/european.html"> 
-<span class="menu-text">Instruments</span></a>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-instruments" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Instruments</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-instruments">    
+        <li>
+    <a class="dropdown-item" href="../instruments/european.html">
+ <span class="dropdown-text">European</span></a>
   </li>  
+        <li>
+    <a class="dropdown-item" href="../instruments/american.html">
+ <span class="dropdown-text">American</span></a>
+  </li>  
+    </ul>
+  </li>
   <li class="nav-item">
     <a class="nav-link" href="../market/market_data.html"> 
 <span class="menu-text">Market</span></a>
@@ -190,6 +201,10 @@ window.Quarto = {
         <li>
     <a class="dropdown-item" href="../pricers/tree.html">
  <span class="dropdown-text">Binomial Tree</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../pricers/finite_differences.html">
+ <span class="dropdown-text">Finite Differences</span></a>
   </li>  
     </ul>
   </li>
@@ -242,8 +257,115 @@ window.Quarto = {
 
 <section id="the-problem" class="level2">
 <h2 class="anchored" data-anchor-id="the-problem">The Problem</h2>
-<p>Before Black, Scholes, and Merton published their work in 1973, there was no rigorous, universally accepted method for pricing options. Practitioners used rules of thumb. The fundamental question — <em>what is the fair price of the right to buy a stock at a fixed price on a fixed future date?</em> — had no clean answer.</p>
-<p>The difficulty is that options are non-linear instruments. The payoff of a call, <span class="math inline">\(\max(S_T - K, 0)\)</span>, is not proportional to the underlying. And the fair price today must somehow reflect the full distribution of possible stock prices at expiry — which is itself uncertain. The insight of Black, Scholes, and Merton was to show that, under certain assumptions, you can <em>eliminate</em> this uncertainty entirely by constructing a continuously rebalanced portfolio. When there is no uncertainty left, the portfolio must earn the risk-free rate — and that constraint pins down the option price.</p>
+<p>Before Black, Scholes, and Merton published their work in 1973, there was no rigorous, universally accepted method for pricing options. Practitioners used rules of thumb. The fundamental question of <em>‘what is the fair price of the right to buy a stock at a fixed price on a fixed future date?’</em> had no clean answer.</p>
+<p>The difficulty is that options are non-linear instruments, i.e., the payoff of a call, <span class="math inline">\(\max(S_T - K, 0) - p\)</span>, is not proportional to the underlying asset value. Along with this, the fair price today must somehow reflect the full distribution of possible stock prices at expiry, which is itself uncertain. The insight of Black, Scholes, and Merton was to show that, under certain assumptions, you can <em>eliminate</em> this uncertainty entirely by constructing a <em>continuously rebalanced portfolio</em>. When there is no uncertainty left, the portfolio <strong>must</strong> earn the risk-free rate and that constraint pins down the option price.</p>
+<div id="cell-fig-payoffs" class="cell" data-execution_count="1">
+<div class="cell-output cell-output-stderr">
+<pre><code>findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family ['PT Serif'] not found. Falling back to DejaVu Sans.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.
+findfont: Font family 'PT Serif' not found.</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div id="fig-payoffs" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-payoffs-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="black_scholes_files/figure-html/fig-payoffs-output-2.png" width="756" height="277" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-payoffs-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: Profit / loss at expiry for a European call and put (K = £100, premium = £5)
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
 </section>
 <section id="assumptions" class="level2">
 <h2 class="anchored" data-anchor-id="assumptions">Assumptions</h2>
@@ -292,30 +414,30 @@ window.Quarto = {
 <section id="the-blackscholesmodel-class" class="level2">
 <h2 class="anchored" data-anchor-id="the-blackscholesmodel-class">The <code>BlackScholesModel</code> Class</h2>
 <p><code>BlackScholesModel</code> holds the single free parameter of the model: <span class="math inline">\(\sigma\)</span>, the constant volatility. Everything else — the current spot price, interest rates, dividends — is observable market data and lives in <code>MarketData</code>. The model only encodes what the BS assumption adds: that the asset’s randomness is characterised by a single, constant number.</p>
-<div id="d2b4e5c1" class="cell" data-execution_count="1">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> options_pricer <span class="im">import</span> BlackScholesModel</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co"># 20% annualised volatility</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>model <span class="op">=</span> BlackScholesModel(vol<span class="op">=</span><span class="fl">0.20</span>)</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co"># vol must be strictly positive — zero would degenerate the formula</span></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co"># BlackScholesModel(vol=0.0)  # raises ValueError</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="31399ce9" class="cell" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> options_pricer <span class="im">import</span> BlackScholesModel</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co"># 20% annualised volatility</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>model <span class="op">=</span> BlackScholesModel(vol<span class="op">=</span><span class="fl">0.20</span>)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co"># vol must be strictly positive — zero would degenerate the formula</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="co"># BlackScholesModel(vol=0.0)  # raises ValueError</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>The model is passed to a pricer together with an instrument and market data:</p>
-<div id="2c16cf2b" class="cell" data-execution_count="2">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> options_pricer <span class="im">import</span> (</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    BlackScholesModel, EuropeanOption, MarketData, OptionType,</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    ClosedFormPricer, MonteCarloPricer, TreePricer,</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>model <span class="op">=</span> BlackScholesModel(vol<span class="op">=</span><span class="fl">0.20</span>)</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>md    <span class="op">=</span> MarketData(spot<span class="op">=</span><span class="fl">100.0</span>, rate<span class="op">=</span><span class="fl">0.05</span>)</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>call  <span class="op">=</span> EuropeanOption(option_type<span class="op">=</span>OptionType.CALL, strike<span class="op">=</span><span class="fl">100.0</span>, expiry<span class="op">=</span><span class="fl">1.0</span>)</span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co"># All three pricers accept the same (instrument, market_data, model) signature</span></span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>ClosedFormPricer.price(call, md, model)              <span class="co"># analytical</span></span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>MonteCarloPricer(n_paths<span class="op">=</span><span class="dv">100_000</span>).price(call, md, model)  <span class="co"># simulation</span></span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>TreePricer(n_steps<span class="op">=</span><span class="dv">200</span>).price(call, md, model)        <span class="co"># tree</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="9edfedc8" class="cell" data-execution_count="3">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> options_pricer <span class="im">import</span> (</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    BlackScholesModel, EuropeanOption, MarketData, OptionType,</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    ClosedFormPricer, MonteCarloPricer, TreePricer,</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>model <span class="op">=</span> BlackScholesModel(vol<span class="op">=</span><span class="fl">0.20</span>)</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>md    <span class="op">=</span> MarketData(spot<span class="op">=</span><span class="fl">100.0</span>, rate<span class="op">=</span><span class="fl">0.05</span>)</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>call  <span class="op">=</span> EuropeanOption(option_type<span class="op">=</span>OptionType.CALL, strike<span class="op">=</span><span class="fl">100.0</span>, expiry<span class="op">=</span><span class="fl">1.0</span>)</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="co"># All three pricers accept the same (instrument, market_data, model) signature</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>ClosedFormPricer.price(call, md, model)              <span class="co"># analytical</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>MonteCarloPricer(n_paths<span class="op">=</span><span class="dv">100_000</span>).price(call, md, model)  <span class="co"># simulation</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>TreePricer(n_steps<span class="op">=</span><span class="dv">200</span>).price(call, md, model)        <span class="co"># tree</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
 <section id="limitations" class="level2">

@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Binomial Tree Pricer – Options Pricer</title>
+<title>Finite Differences Pricer – Options Pricer</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -225,25 +225,29 @@ window.Quarto = {
    
   <ul>
   <li><a href="#overview" id="toc-overview" class="nav-link active" data-scroll-target="#overview">Overview</a></li>
-  <li><a href="#the-crr-parameterisation" id="toc-the-crr-parameterisation" class="nav-link" data-scroll-target="#the-crr-parameterisation">The CRR Parameterisation</a></li>
-  <li><a href="#building-the-tree" id="toc-building-the-tree" class="nav-link" data-scroll-target="#building-the-tree">Building the Tree</a></li>
-  <li><a href="#backward-induction" id="toc-backward-induction" class="nav-link" data-scroll-target="#backward-induction">Backward Induction</a></li>
-  <li><a href="#convergence-to-black-scholes" id="toc-convergence-to-black-scholes" class="nav-link" data-scroll-target="#convergence-to-black-scholes">Convergence to Black-Scholes</a></li>
-  <li><a href="#the-treepricer-class" id="toc-the-treepricer-class" class="nav-link" data-scroll-target="#the-treepricer-class">The <code>TreePricer</code> Class</a>
+  <li><a href="#the-black-scholes-pde" id="toc-the-black-scholes-pde" class="nav-link" data-scroll-target="#the-black-scholes-pde">The Black-Scholes PDE</a></li>
+  <li><a href="#grid-setup" id="toc-grid-setup" class="nav-link" data-scroll-target="#grid-setup">Grid Setup</a></li>
+  <li><a href="#crank-nicolson-scheme" id="toc-crank-nicolson-scheme" class="nav-link" data-scroll-target="#crank-nicolson-scheme">Crank-Nicolson Scheme</a></li>
+  <li><a href="#tridiagonal-system" id="toc-tridiagonal-system" class="nav-link" data-scroll-target="#tridiagonal-system">Tridiagonal System</a>
   <ul class="collapse">
-  <li><a href="#comparing-accuracy-across-step-counts" id="toc-comparing-accuracy-across-step-counts" class="nav-link" data-scroll-target="#comparing-accuracy-across-step-counts">Comparing Accuracy Across Step Counts</a></li>
-  <li><a href="#with-dividends" id="toc-with-dividends" class="nav-link" data-scroll-target="#with-dividends">With Dividends</a></li>
-  <li><a href="#american-options" id="toc-american-options" class="nav-link" data-scroll-target="#american-options">American Options</a></li>
+  <li><a href="#boundary-corrections" id="toc-boundary-corrections" class="nav-link" data-scroll-target="#boundary-corrections">Boundary Corrections</a></li>
+  </ul></li>
+  <li><a href="#boundary-conditions" id="toc-boundary-conditions" class="nav-link" data-scroll-target="#boundary-conditions">Boundary Conditions</a></li>
+  <li><a href="#early-exercise-constraint" id="toc-early-exercise-constraint" class="nav-link" data-scroll-target="#early-exercise-constraint">Early Exercise Constraint</a></li>
+  <li><a href="#the-finitedifferencespricer-class" id="toc-the-finitedifferencespricer-class" class="nav-link" data-scroll-target="#the-finitedifferencespricer-class">The <code>FiniteDifferencesPricer</code> Class</a>
+  <ul class="collapse">
+  <li><a href="#comparing-to-the-tree" id="toc-comparing-to-the-tree" class="nav-link" data-scroll-target="#comparing-to-the-tree">Comparing to the Tree</a></li>
+  <li><a href="#effect-of-grid-refinement" id="toc-effect-of-grid-refinement" class="nav-link" data-scroll-target="#effect-of-grid-refinement">Effect of Grid Refinement</a></li>
   </ul></li>
   </ul>
-<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="tree.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="finite_differences.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Binomial Tree Pricer</h1>
+<h1 class="title">Finite Differences Pricer</h1>
 </div>
 
 
@@ -262,114 +266,148 @@ window.Quarto = {
 
 <section id="overview" class="level2">
 <h2 class="anchored" data-anchor-id="overview">Overview</h2>
-<p>The binomial tree is a discrete-time approximation to the continuous-time Black-Scholes model. Instead of letting the stock price evolve continuously, we divide the option’s life into <span class="math inline">\(N\)</span> equal time steps and assume that at each step the stock can move in exactly one of two directions: up by a factor <span class="math inline">\(u\)</span>, or down by a factor <span class="math inline">\(d\)</span>. This creates a recombining tree of possible stock prices — “recombining” because an up-move followed by a down-move lands at the same price as a down-move followed by an up-move.</p>
-<p>The tree has three advantages over the closed-form pricer:</p>
-<ol type="1">
-<li><strong>Generality</strong>: it can price instruments where no analytical solution exists — most importantly, <strong>American options</strong> with early exercise, which will be supported in a future version of this library.</li>
-<li><strong>Intuition</strong>: the backward induction is a transparent, step-by-step calculation that makes the pricing logic easy to trace.</li>
-<li><strong>Flexibility</strong>: non-standard payoff structures can be incorporated by modifying the terminal or intermediate payoffs.</li>
-</ol>
+<p>The finite differences method solves the Black-Scholes PDE directly by discretising the stock price and time dimensions onto a grid. Unlike the binomial tree (which builds an explicit tree of stock prices) or Monte Carlo (which simulates paths), finite differences works backwards through a grid of option values — making it well-suited to American options where early exercise must be enforced at every point in <span class="math inline">\((S, t)\)</span> space.</p>
 </section>
-<section id="the-crr-parameterisation" class="level2">
-<h2 class="anchored" data-anchor-id="the-crr-parameterisation">The CRR Parameterisation</h2>
-<p>The most widely used binomial tree is the <strong>Cox-Ross-Rubinstein (CRR)</strong> parameterisation, which chooses the up and down factors to match the volatility of the Black-Scholes model.</p>
-<p>Let the time step be <span class="math inline">\(\Delta t = T/N\)</span>. The CRR factors are:</p>
-<p><span class="math display">\[u = e^{\sigma\sqrt{\Delta t}}, \qquad d = \frac{1}{u} = e^{-\sigma\sqrt{\Delta t}}\]</span></p>
-<p>The choice <span class="math inline">\(d = 1/u\)</span> ensures the tree <strong>recombines</strong>: after any sequence of up and down moves, the order does not matter, only the count. This keeps the number of distinct nodes at time step <span class="math inline">\(i\)</span> equal to <span class="math inline">\(i+1\)</span> (not <span class="math inline">\(2^i\)</span>), making the algorithm computationally feasible.</p>
-<p>The <strong>risk-neutral probability</strong> of an up-move is set so that the expected return under the risk-neutral measure matches the risk-free rate, net of dividends:</p>
-<p><span class="math display">\[p = \frac{e^{(r-q)\Delta t} - d}{u - d}\]</span></p>
-<p>For <span class="math inline">\(p\)</span> to be a valid probability we need <span class="math inline">\(0 &lt; p &lt; 1\)</span>, which holds as long as <span class="math inline">\(d &lt; e^{(r-q)\Delta t} &lt; u\)</span> — satisfied for any realistic combination of <span class="math inline">\(r\)</span>, <span class="math inline">\(q\)</span>, <span class="math inline">\(\sigma\)</span>, and step count.</p>
+<section id="the-black-scholes-pde" class="level2">
+<h2 class="anchored" data-anchor-id="the-black-scholes-pde">The Black-Scholes PDE</h2>
+<p>Under the risk-neutral measure, the option value <span class="math inline">\(V(S, t)\)</span> satisfies the Black-Scholes PDE:</p>
+<p><span class="math display">\[\frac{\partial V}{\partial t} + \frac{1}{2}\sigma^2 S^2 \frac{\partial^2 V}{\partial S^2} + (r - q) S \frac{\partial V}{\partial S} - rV = 0\]</span></p>
+<p>It is more natural to work in <strong>time-to-maturity</strong> <span class="math inline">\(\tau = T - t\)</span> (so <span class="math inline">\(\tau = 0\)</span> is expiry and <span class="math inline">\(\tau = T\)</span> is today). Reversing time turns the PDE into a forward equation:</p>
+<p><span class="math display">\[\frac{\partial V}{\partial \tau} = \frac{1}{2}\sigma^2 S^2 \frac{\partial^2 V}{\partial S^2} + (r - q) S \frac{\partial V}{\partial S} - rV\]</span></p>
+<p>Starting from the known terminal condition at <span class="math inline">\(\tau = 0\)</span> (the option payoff), we march forward in <span class="math inline">\(\tau\)</span> — stepping backwards through calendar time — until we reach <span class="math inline">\(\tau = T\)</span> (today’s option price).</p>
 </section>
-<section id="building-the-tree" class="level2">
-<h2 class="anchored" data-anchor-id="building-the-tree">Building the Tree</h2>
-<p>At expiry (step <span class="math inline">\(N\)</span>), the stock can take <span class="math inline">\(N+1\)</span> distinct values, indexed by the number of up-moves <span class="math inline">\(j \in \{0, 1, \ldots, N\}\)</span>:</p>
-<p><span class="math display">\[S_T^{(j)} = S \cdot u^j \cdot d^{N-j}\]</span></p>
-<p>where <span class="math inline">\(j=0\)</span> gives the all-down outcome <span class="math inline">\(S \cdot d^N\)</span> (the lowest price) and <span class="math inline">\(j=N\)</span> gives the all-up outcome <span class="math inline">\(S \cdot u^N\)</span> (the highest price).</p>
-<p>The terminal option values are simply the payoffs:</p>
-<p><span class="math display">\[V_N^{(j)} = \max(S_T^{(j)} - K,\, 0) \quad \text{(call)}\]</span> <span class="math display">\[V_N^{(j)} = \max(K - S_T^{(j)},\, 0) \quad \text{(put)}\]</span></p>
+<section id="grid-setup" class="level2">
+<h2 class="anchored" data-anchor-id="grid-setup">Grid Setup</h2>
+<p>A uniform grid is placed over the region <span class="math inline">\([0, S_{\max}] \times [0, T]\)</span>:</p>
+<ul>
+<li><span class="math inline">\(S_j = j \cdot \Delta S\)</span> for <span class="math inline">\(j = 1, \ldots, M\)</span> (interior nodes only; <span class="math inline">\(S_0 = 0\)</span> and <span class="math inline">\(S_{M+1} = S_{\max}\)</span> are boundary nodes)</li>
+<li><span class="math inline">\(\tau^n = n \cdot \Delta\tau\)</span> for <span class="math inline">\(n = 0, 1, \ldots, N\)</span></li>
+</ul>
+<p>The grid spacing is <span class="math inline">\(\Delta S = S_{\max} / (M + 1)\)</span> and the time step is <span class="math inline">\(\Delta\tau = T / N\)</span>. <span class="math inline">\(S_{\max}\)</span> is chosen as a multiple of <span class="math inline">\(\max(S_0, K)\)</span> — large enough that the boundary conditions there are not binding.</p>
 </section>
-<section id="backward-induction" class="level2">
-<h2 class="anchored" data-anchor-id="backward-induction">Backward Induction</h2>
-<p>Once the terminal values are set, we work backwards through the tree. At each step, the value at a node is the discounted expected value of the next step’s two children:</p>
-<p><span class="math display">\[V_i^{(j)} = e^{-r\Delta t}\!\left[p\, V_{i+1}^{(j+1)} + (1-p)\, V_{i+1}^{(j)}\right]\]</span></p>
-<p>Here, <span class="math inline">\(V_{i+1}^{(j+1)}\)</span> is the value after an up-move and <span class="math inline">\(V_{i+1}^{(j)}\)</span> is the value after a down-move. After <span class="math inline">\(N\)</span> backward steps we reach the root, which contains the option price <span class="math inline">\(V_0^{(0)}\)</span>.</p>
-<p>In the implementation, this is vectorised over all <span class="math inline">\(j\)</span> simultaneously:</p>
-<pre><code>V ← disc * (p * V[1:] + (1-p) * V[:-1])</code></pre>
-<p>Each iteration reduces the array length by 1. After <span class="math inline">\(N\)</span> iterations, the single remaining value is the price.</p>
+<section id="crank-nicolson-scheme" class="level2">
+<h2 class="anchored" data-anchor-id="crank-nicolson-scheme">Crank-Nicolson Scheme</h2>
+<p>The simplest stable scheme is <strong>explicit Euler</strong> (compute <span class="math inline">\(V^{n+1}\)</span> purely from <span class="math inline">\(V^n\)</span>), but it requires a very small time step for stability. The <strong>fully implicit</strong> scheme is unconditionally stable but only first-order accurate in time.</p>
+<p><strong>Crank-Nicolson</strong> (CN) averages the two: it is unconditionally stable and <strong>second-order accurate in both <span class="math inline">\(\Delta S\)</span> and <span class="math inline">\(\Delta\tau\)</span></strong>, making it the standard choice in derivatives pricing.</p>
+<p>Define the spatial operator <span class="math inline">\(\mathcal{L}\)</span> acting on <span class="math inline">\(V\)</span> at interior node <span class="math inline">\(j\)</span>:</p>
+<p><span class="math display">\[\mathcal{L}[V]_j = a_j V_{j-1} + b_j V_j + c_j V_{j+1}\]</span></p>
+<p>where the coefficients follow from the discretised PDE (central differences for both first and second derivatives):</p>
+<p><span class="math display">\[\alpha_j = \frac{\sigma^2 S_j^2}{2\,\Delta S^2}, \qquad \beta_j = \frac{(r-q)\,S_j}{2\,\Delta S}\]</span></p>
+<p><span class="math display">\[a_j = \alpha_j - \beta_j, \qquad b_j = -2\alpha_j - r, \qquad c_j = \alpha_j + \beta_j\]</span></p>
+<p>The CN time step advances from <span class="math inline">\(\tau^n\)</span> to <span class="math inline">\(\tau^{n+1}\)</span> by averaging the explicit and implicit operators:</p>
+<p><span class="math display">\[\frac{V^{n+1} - V^n}{\Delta\tau} = \frac{1}{2}\mathcal{L}[V^{n+1}] + \frac{1}{2}\mathcal{L}[V^n]\]</span></p>
+<p>Rearranging separates knowns (<span class="math inline">\(V^n\)</span>) from unknowns (<span class="math inline">\(V^{n+1}\)</span>):</p>
+<p><span class="math display">\[\underbrace{\left(I - \frac{\Delta\tau}{2}\mathcal{L}\right)}_{\text{LHS matrix } A} V^{n+1} = \underbrace{\left(I + \frac{\Delta\tau}{2}\mathcal{L}\right)}_{\text{RHS matrix } B} V^n + \text{BC}\]</span></p>
 </section>
-<section id="convergence-to-black-scholes" class="level2">
-<h2 class="anchored" data-anchor-id="convergence-to-black-scholes">Convergence to Black-Scholes</h2>
-<p>As <span class="math inline">\(N \to \infty\)</span>, the binomial tree converges to the Black-Scholes closed-form price. The convergence rate is <span class="math inline">\(O(1/N)\)</span> for CRR — so doubling the number of steps halves the error. In practice, 200 steps gives accuracy within a few cents for typical options; 1000 steps reduces this to a fraction of a cent.</p>
-<p>The error oscillates around the true value as <span class="math inline">\(N\)</span> increases (a well-known feature of CRR), which means simply comparing prices at different step counts is more informative than trusting any single <span class="math inline">\(N\)</span>.</p>
-<pre><code>N =  50:  error ≈ 0.04  (one step per week for a 1-year option)
-N = 200:  error ≈ 0.01
-N = 500:  error ≈ 0.004
-N = 1000: error ≈ 0.002</code></pre>
-<p>Richardson extrapolation (averaging tree prices at <span class="math inline">\(N\)</span> and <span class="math inline">\(2N\)</span> steps) can eliminate the leading-order error term and achieve <span class="math inline">\(O(1/N^2)\)</span> convergence, but this is not implemented here.</p>
+<section id="tridiagonal-system" class="level2">
+<h2 class="anchored" data-anchor-id="tridiagonal-system">Tridiagonal System</h2>
+<p>The matrix <span class="math inline">\(A\)</span> has the structure:</p>
+<p><span class="math display">\[A = \begin{pmatrix}
+1 - \tfrac{\Delta\tau}{2} b_1 &amp; -\tfrac{\Delta\tau}{2} c_1 &amp; &amp; \\
+-\tfrac{\Delta\tau}{2} a_2 &amp; 1 - \tfrac{\Delta\tau}{2} b_2 &amp; -\tfrac{\Delta\tau}{2} c_2 &amp; \\
+&amp; \ddots &amp; \ddots &amp; \ddots
+\end{pmatrix}\]</span></p>
+<p>This tridiagonal system is solved at each time step using <code>scipy.linalg.solve_banded</code>, which exploits the banded structure for <span class="math inline">\(\mathcal{O}(M)\)</span> cost per step (rather than <span class="math inline">\(\mathcal{O}(M^3)\)</span> for a general solver).</p>
+<p>The RHS matrix <span class="math inline">\(B\)</span> is similarly tridiagonal, and the matrix-vector product <span class="math inline">\(B V^n\)</span> is computed directly without forming <span class="math inline">\(B\)</span> explicitly:</p>
+<p><span class="math display">\[\text{rhs}_j = (1 + \tfrac{\Delta\tau}{2} b_j)\, V_j^n + \tfrac{\Delta\tau}{2} a_j\, V_{j-1}^n + \tfrac{\Delta\tau}{2} c_j\, V_{j+1}^n\]</span></p>
+<section id="boundary-corrections" class="level3">
+<h3 class="anchored" data-anchor-id="boundary-corrections">Boundary Corrections</h3>
+<p>At the first and last interior nodes, the stencil reaches outside the grid. These boundary contributions are moved to the right-hand side as known corrections. For Crank-Nicolson they involve boundary values at both the old and new time levels:</p>
+<p><span class="math display">\[\text{rhs}_1 \mathrel{+}= \tfrac{\Delta\tau}{2}\, a_1 \left(V_{\text{left}}^n + V_{\text{left}}^{n+1}\right)\]</span> <span class="math display">\[\text{rhs}_M \mathrel{+}= \tfrac{\Delta\tau}{2}\, c_M \left(V_{\text{right}}^n + V_{\text{right}}^{n+1}\right)\]</span></p>
 </section>
-<section id="the-treepricer-class" class="level2">
-<h2 class="anchored" data-anchor-id="the-treepricer-class">The <code>TreePricer</code> Class</h2>
-<p><code>TreePricer</code> is a dataclass with a single configuration field: the number of time steps.</p>
-<div id="7d9f687f" class="cell" data-execution_count="1">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> options_pricer <span class="im">import</span> (</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    BlackScholesModel, EuropeanOption, MarketData, OptionType, TreePricer,</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>md    <span class="op">=</span> MarketData(spot<span class="op">=</span><span class="fl">100.0</span>, rate<span class="op">=</span><span class="fl">0.05</span>)</span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>model <span class="op">=</span> BlackScholesModel(vol<span class="op">=</span><span class="fl">0.20</span>)</span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>call  <span class="op">=</span> EuropeanOption(option_type<span class="op">=</span>OptionType.CALL, strike<span class="op">=</span><span class="fl">100.0</span>, expiry<span class="op">=</span><span class="fl">1.0</span>)</span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>put   <span class="op">=</span> EuropeanOption(option_type<span class="op">=</span>OptionType.PUT,  strike<span class="op">=</span><span class="fl">100.0</span>, expiry<span class="op">=</span><span class="fl">1.0</span>)</span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Default: 200 steps</span></span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>tree <span class="op">=</span> TreePricer(n_steps<span class="op">=</span><span class="dv">200</span>)</span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(tree.price(call, md, model))  <span class="co"># ~10.45</span></span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(tree.price(put,  md, model))  <span class="co"># ~5.57</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="boundary-conditions" class="level2">
+<h2 class="anchored" data-anchor-id="boundary-conditions">Boundary Conditions</h2>
+<p>The boundary conditions have clear economic interpretations.</p>
+<p><strong>Call option:</strong> - <span class="math inline">\(V(0, \tau) = 0\)</span>: a call on a worthless stock is worthless - <span class="math inline">\(V(S_{\max}, \tau) = S_{\max} - K e^{-r\tau}\)</span>: deep in-the-money, the call behaves like a forward contract</p>
+<p><strong>European put:</strong> - <span class="math inline">\(V(0, \tau) = K e^{-r\tau}\)</span>: with certainty the put pays <span class="math inline">\(K\)</span> at expiry, discounted to present value - <span class="math inline">\(V(S_{\max}, \tau) = 0\)</span>: far out-of-the-money, the put is worthless</p>
+<p><strong>American put:</strong> - <span class="math inline">\(V(0, \tau) = K\)</span>: at <span class="math inline">\(S = 0\)</span> under GBM the stock stays at zero forever, so the holder exercises immediately and receives <span class="math inline">\(K\)</span> (no discounting — the payoff is obtained now, not at expiry) - <span class="math inline">\(V(S_{\max}, \tau) = 0\)</span>: same as European</p>
+</section>
+<section id="early-exercise-constraint" class="level2">
+<h2 class="anchored" data-anchor-id="early-exercise-constraint">Early Exercise Constraint</h2>
+<p>For European options, the CN system fully describes the price. For American options, we must additionally enforce the <strong>free boundary condition</strong>: the option value cannot fall below the intrinsic value at any node.</p>
+<p>This is formally a <strong>Linear Complementarity Problem (LCP)</strong>:</p>
+<p><span class="math display">\[V^{n+1} \geq h^{n+1}, \qquad A V^{n+1} - B V^n \geq 0, \qquad (V^{n+1} - h^{n+1})\cdot(A V^{n+1} - B V^n) = 0\]</span></p>
+<p>where <span class="math inline">\(h\)</span> denotes the intrinsic value. The exact LCP can be solved via Projected SOR (PSOR). The implementation here uses the simpler <strong>operator-splitting</strong> approach: solve the CN system as if it were a European option, then project the result onto the feasibility constraint:</p>
+<p><span class="math display">\[V^{n+1} \leftarrow \max\!\left(V^{n+1},\; h\right)\]</span></p>
+<p>This is applied at every <span class="math inline">\(\tau\)</span>-step. The approach is second-order accurate for smooth free-boundary problems and produces prices within a few cents of PSOR for standard American options.</p>
+</section>
+<section id="the-finitedifferencespricer-class" class="level2">
+<h2 class="anchored" data-anchor-id="the-finitedifferencespricer-class">The <code>FiniteDifferencesPricer</code> Class</h2>
+<p><code>FiniteDifferencesPricer</code> is a dataclass with three configuration fields:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 24%">
+<col style="width: 31%">
+<col style="width: 44%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Field</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>n_s</code></td>
+<td>200</td>
+<td>Number of interior S grid points</td>
+</tr>
+<tr class="even">
+<td><code>n_t</code></td>
+<td>200</td>
+<td>Number of time steps</td>
+</tr>
+<tr class="odd">
+<td><code>s_max_factor</code></td>
+<td>3.0</td>
+<td><span class="math inline">\(S_{\max} = \texttt{s\_max\_factor} \times \max(S_0, K)\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>It accepts both <code>EuropeanOption</code> and <code>AmericanOption</code>. For European options the early exercise projection is skipped; the CN scheme alone recovers the Black-Scholes price.</p>
+<div id="6e81edcc" class="cell" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> options_pricer <span class="im">import</span> (</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    AmericanOption, BlackScholesModel, ClosedFormPricer, EuropeanOption,</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    FiniteDifferencesPricer, MarketData, OptionType, TreePricer,</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>md    <span class="op">=</span> MarketData(spot<span class="op">=</span><span class="fl">100.0</span>, rate<span class="op">=</span><span class="fl">0.05</span>)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>model <span class="op">=</span> BlackScholesModel(vol<span class="op">=</span><span class="fl">0.20</span>)</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>eur_put <span class="op">=</span> EuropeanOption(option_type<span class="op">=</span>OptionType.PUT, strike<span class="op">=</span><span class="fl">100.0</span>, expiry<span class="op">=</span><span class="fl">1.0</span>)</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>am_put  <span class="op">=</span> AmericanOption(option_type<span class="op">=</span>OptionType.PUT, strike<span class="op">=</span><span class="fl">100.0</span>, expiry<span class="op">=</span><span class="fl">1.0</span>)</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>fd <span class="op">=</span> FiniteDifferencesPricer()</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="co"># European: matches closed-form within a few cents</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(fd.price(eur_put, md, model))  <span class="co"># ~5.57</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(ClosedFormPricer.price(eur_put, md, model))  <span class="co"># 5.5735</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="co"># American: early exercise premium ~0.32</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(fd.price(am_put, md, model))   <span class="co"># ~5.89</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<section id="comparing-accuracy-across-step-counts" class="level3">
-<h3 class="anchored" data-anchor-id="comparing-accuracy-across-step-counts">Comparing Accuracy Across Step Counts</h3>
-<div id="829db73a" class="cell" data-execution_count="2">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> options_pricer <span class="im">import</span> ClosedFormPricer</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>exact <span class="op">=</span> ClosedFormPricer.price(call, md, model)</span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> n <span class="kw">in</span> [<span class="dv">50</span>, <span class="dv">100</span>, <span class="dv">200</span>, <span class="dv">500</span>, <span class="dv">1000</span>]:</span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    tr <span class="op">=</span> TreePricer(n_steps<span class="op">=</span>n).price(call, md, model)</span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"N=</span><span class="sc">{</span>n<span class="sc">:5d}</span><span class="ss">  price=</span><span class="sc">{</span>tr<span class="sc">:.5f}</span><span class="ss">  error=</span><span class="sc">{</span>tr <span class="op">-</span> exact<span class="sc">:+.5f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="comparing-to-the-tree" class="level3">
+<h3 class="anchored" data-anchor-id="comparing-to-the-tree">Comparing to the Tree</h3>
+<p>Both the tree and FD pricer should agree closely for American puts. FD generally has smaller oscillations than CRR as the grid is refined.</p>
+<div id="3c3520e6" class="cell" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>am_put <span class="op">=</span> AmericanOption(option_type<span class="op">=</span>OptionType.PUT, strike<span class="op">=</span><span class="fl">100.0</span>, expiry<span class="op">=</span><span class="fl">1.0</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>tree_price <span class="op">=</span> TreePricer(n_steps<span class="op">=</span><span class="dv">1000</span>).price(am_put, md, model)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>fd_price   <span class="op">=</span> FiniteDifferencesPricer(n_s<span class="op">=</span><span class="dv">200</span>, n_t<span class="op">=</span><span class="dv">200</span>).price(am_put, md, model)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Tree (N=1000):  </span><span class="sc">{</span>tree_price<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"FD (200×200):   </span><span class="sc">{</span>fd_price<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Difference:     </span><span class="sc">{</span><span class="bu">abs</span>(fd_price <span class="op">-</span> tree_price)<span class="sc">:.4f}</span><span class="ss">"</span>)  <span class="co"># typically &lt; 0.03</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
-<section id="with-dividends" class="level3">
-<h3 class="anchored" data-anchor-id="with-dividends">With Dividends</h3>
-<p>The dividend yield <span class="math inline">\(q\)</span> is incorporated through the risk-neutral probability <span class="math inline">\(p = (e^{(r-q)\Delta t} - d)/(u-d)\)</span>. A positive dividend yield reduces <span class="math inline">\(p\)</span>, reflecting the drag on the stock’s expected return.</p>
-<div id="f2ca9501" class="cell" data-execution_count="3">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>md_div <span class="op">=</span> MarketData(spot<span class="op">=</span><span class="fl">100.0</span>, rate<span class="op">=</span><span class="fl">0.05</span>, div_yield<span class="op">=</span><span class="fl">0.02</span>)</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(TreePricer(n_steps<span class="op">=</span><span class="dv">200</span>).price(call, md_div, model))  <span class="co"># &lt; 10.45 (dividends lower calls)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</section>
-<section id="american-options" class="level3">
-<h3 class="anchored" data-anchor-id="american-options">American Options</h3>
-<p>The binomial tree extends naturally to American options. During backward induction, each node represents a decision point: the holder can either continue holding (continuation value) or exercise immediately (intrinsic value). The American option value at node <span class="math inline">\((i, j)\)</span> is:</p>
-<p><span class="math display">\[V_i^{(j)} = \max\!\left(e^{-r\Delta t}\!\left[p\, V_{i+1}^{(j+1)} + (1-p)\, V_{i+1}^{(j)}\right],\; h_i^{(j)}\right)\]</span></p>
-<p>where <span class="math inline">\(h_i^{(j)}\)</span> is the intrinsic value at that node:</p>
-<p><span class="math display">\[h_i^{(j)} = \max\!\left(K - S_i^{(j)},\; 0\right) \quad \text{(put)}, \qquad h_i^{(j)} = \max\!\left(S_i^{(j)} - K,\; 0\right) \quad \text{(call)}\]</span></p>
-<p>In the implementation, the stock price at level <span class="math inline">\(i\)</span> (measuring steps from the root) is reconstructed from the up/down factors:</p>
-<p><span class="math display">\[S_i^{(j)} = S \cdot u^j \cdot d^{i-j}, \qquad j = 0, 1, \ldots, i\]</span></p>
-<p>The backward induction loop becomes:</p>
-<pre><code>for k = 1, ..., N:
-    v ← disc * (p * v[1:] + (1-p) * v[:-1])   # continuation
-    if American:
-        step ← N - k
-        s_nodes ← S * u^j * d^(step-j)  for j = 0..step
-        v ← max(v, intrinsic(s_nodes))          # early exercise</code></pre>
-<p>This single extra line per step is the only change from the European tree.</p>
-<div id="86db5b6e" class="cell" data-execution_count="4">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> options_pricer <span class="im">import</span> AmericanOption, BlackScholesModel, MarketData, OptionType, TreePricer</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>md    <span class="op">=</span> MarketData(spot<span class="op">=</span><span class="fl">100.0</span>, rate<span class="op">=</span><span class="fl">0.05</span>)</span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>model <span class="op">=</span> BlackScholesModel(vol<span class="op">=</span><span class="fl">0.20</span>)</span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>am_put <span class="op">=</span> AmericanOption(option_type<span class="op">=</span>OptionType.PUT, strike<span class="op">=</span><span class="fl">100.0</span>, expiry<span class="op">=</span><span class="fl">1.0</span>)</span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Early exercise premium: American &gt; European by ~0.32</span></span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(TreePricer(n_steps<span class="op">=</span><span class="dv">500</span>).price(am_put, md, model))  <span class="co"># ~5.89</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="effect-of-grid-refinement" class="level3">
+<h3 class="anchored" data-anchor-id="effect-of-grid-refinement">Effect of Grid Refinement</h3>
+<div id="9ed62608" class="cell" data-execution_count="3">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> n <span class="kw">in</span> [<span class="dv">50</span>, <span class="dv">100</span>, <span class="dv">200</span>, <span class="dv">500</span>]:</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    p <span class="op">=</span> FiniteDifferencesPricer(n_s<span class="op">=</span>n, n_t<span class="op">=</span>n).price(am_put, md, model)</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"n_s=n_t=</span><span class="sc">{</span>n<span class="sc">:4d}</span><span class="ss">:  </span><span class="sc">{</span>p<span class="sc">:.5f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 
 
