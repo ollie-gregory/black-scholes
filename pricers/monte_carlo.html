@@ -288,7 +288,7 @@ window.Quarto = {
 <section id="the-montecarlopricer-class" class="level2">
 <h2 class="anchored" data-anchor-id="the-montecarlopricer-class">The <code>MonteCarloPricer</code> Class</h2>
 <p><code>MonteCarloPricer</code> is a dataclass with two configuration fields: the number of paths and an optional random seed for reproducibility.</p>
-<div id="27c2f6d3" class="cell" data-execution_count="1">
+<div id="7c396ba4" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> options_pricer <span class="im">import</span> (</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    BlackScholesModel, EuropeanOption, MarketData, MonteCarloPricer, OptionType,</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>)</span>
@@ -308,7 +308,7 @@ window.Quarto = {
 <section id="reproducibility-and-seeding" class="level3">
 <h3 class="anchored" data-anchor-id="reproducibility-and-seeding">Reproducibility and Seeding</h3>
 <p>The pricer uses <code>numpy.random.default_rng(seed)</code> for random number generation. Passing <code>seed=None</code> (the default) draws a fresh seed from the OS entropy pool each time, so results will differ between runs. Passing an integer seed makes results exactly reproducible — useful for testing, debugging, or generating stable outputs in a presentation.</p>
-<div id="c888e89c" class="cell" data-execution_count="2">
+<div id="fef2ba02" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># These will produce identical results</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>p1 <span class="op">=</span> MonteCarloPricer(n_paths<span class="op">=</span><span class="dv">50_000</span>, seed<span class="op">=</span><span class="dv">7</span>)</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>p2 <span class="op">=</span> MonteCarloPricer(n_paths<span class="op">=</span><span class="dv">50_000</span>, seed<span class="op">=</span><span class="dv">7</span>)</span>
@@ -318,7 +318,7 @@ window.Quarto = {
 <section id="path-count-and-accuracy" class="level3">
 <h3 class="anchored" data-anchor-id="path-count-and-accuracy">Path Count and Accuracy</h3>
 <p>Higher path counts reduce statistical noise. A quick rule of thumb: to achieve an accuracy of <span class="math inline">\(\varepsilon\)</span>, you need roughly <span class="math inline">\(N \approx (\sigma_{\hat{V}} / \varepsilon)^2\)</span> paths.</p>
-<div id="b3104732" class="cell" data-execution_count="3">
+<div id="e7ffd426" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> options_pricer <span class="im">import</span> ClosedFormPricer</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>exact <span class="op">=</span> ClosedFormPricer.price(call, md, model)</span>

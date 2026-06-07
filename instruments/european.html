@@ -317,7 +317,7 @@ window.Quarto = {
 <section id="the-europeanoption-class" class="level2">
 <h2 class="anchored" data-anchor-id="the-europeanoption-class">The <code>EuropeanOption</code> Class</h2>
 <p>The <code>EuropeanOption</code> dataclass represents the contract specification — it captures the terms agreed at inception, independent of what the market is doing today.</p>
-<div id="504c754b" class="cell" data-execution_count="1">
+<div id="c5649f55" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> options_pricer <span class="im">import</span> EuropeanOption, OptionType</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co"># A call option with strike 105, expiring in 6 months (0.5 years)</span></span>
@@ -330,13 +330,13 @@ window.Quarto = {
 <span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>call_alt <span class="op">=</span> EuropeanOption(option_type<span class="op">=</span><span class="st">"call"</span>, strike<span class="op">=</span><span class="fl">105.0</span>, expiry<span class="op">=</span><span class="fl">0.5</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>The constructor validates both fields on creation:</p>
-<div id="2392e654" class="cell" data-execution_count="2">
+<div id="b7ff9613" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># These will both raise ValueError</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>EuropeanOption(option_type<span class="op">=</span>OptionType.CALL, strike<span class="op">=-</span><span class="fl">10.0</span>, expiry<span class="op">=</span><span class="fl">1.0</span>)   <span class="co"># negative strike</span></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>EuropeanOption(option_type<span class="op">=</span>OptionType.CALL, strike<span class="op">=</span><span class="fl">100.0</span>, expiry<span class="op">=</span><span class="fl">0.0</span>)   <span class="co"># zero expiry</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p><code>EuropeanOption</code> represents the <em>contract</em> only — it says nothing about what the underlying is currently trading at, what interest rates are, or what volatility looks like. Those inputs live in <code>MarketData</code>. The separation means you can reprice the same contract against many different market scenarios without recreating it.</p>
-<div id="2da5db87" class="cell" data-execution_count="3">
+<div id="a24d20e1" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> options_pricer <span class="im">import</span> BlackScholes, MarketData</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>contract <span class="op">=</span> EuropeanOption(option_type<span class="op">=</span>OptionType.CALL, strike<span class="op">=</span><span class="fl">100.0</span>, expiry<span class="op">=</span><span class="fl">1.0</span>)</span>
