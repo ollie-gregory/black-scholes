@@ -339,7 +339,7 @@ window.Quarto = {
 <section id="the-americanoption-class" class="level2">
 <h2 class="anchored" data-anchor-id="the-americanoption-class">The <code>AmericanOption</code> Class</h2>
 <p><code>AmericanOption</code> has the same interface as <code>EuropeanOption</code> — the distinction is purely about exercise style.</p>
-<div id="4db1a272" class="cell" data-execution_count="1">
+<div id="fdf548b8" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> options_pricer <span class="im">import</span> AmericanOption, OptionType</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co"># ATM 1-year put</span></span>
@@ -349,7 +349,7 @@ window.Quarto = {
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>call <span class="op">=</span> AmericanOption(option_type<span class="op">=</span><span class="st">"call"</span>, strike<span class="op">=</span><span class="fl">100.0</span>, expiry<span class="op">=</span><span class="fl">0.5</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Validation mirrors <code>EuropeanOption</code>: both <code>strike</code> and <code>expiry</code> must be strictly positive.</p>
-<div id="ebbb2a79" class="cell" data-execution_count="2">
+<div id="b3a42bd9" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> options_pricer <span class="im">import</span> AmericanOption, BlackScholesModel, FiniteDifferencesPricer, MarketData, OptionType, TreePricer</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>md    <span class="op">=</span> MarketData(spot<span class="op">=</span><span class="fl">100.0</span>, rate<span class="op">=</span><span class="fl">0.05</span>)</span>

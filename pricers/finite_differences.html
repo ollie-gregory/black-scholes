@@ -367,7 +367,7 @@ window.Quarto = {
 </tbody>
 </table>
 <p>It accepts both <code>EuropeanOption</code> and <code>AmericanOption</code>. For European options the early exercise projection is skipped; the CN scheme alone recovers the Black-Scholes price.</p>
-<div id="027884a5" class="cell" data-execution_count="1">
+<div id="e407f09c" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> options_pricer <span class="im">import</span> (</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    AmericanOption, BlackScholesModel, ClosedFormPricer, EuropeanOption,</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    FiniteDifferencesPricer, MarketData, OptionType, TreePricer,</span>
@@ -391,7 +391,7 @@ window.Quarto = {
 <section id="comparing-to-the-tree" class="level3">
 <h3 class="anchored" data-anchor-id="comparing-to-the-tree">Comparing to the Tree</h3>
 <p>Both the tree and FD pricer should agree closely for American puts. FD generally has smaller oscillations than CRR as the grid is refined.</p>
-<div id="24a8de41" class="cell" data-execution_count="2">
+<div id="b8ef60ff" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>am_put <span class="op">=</span> AmericanOption(option_type<span class="op">=</span>OptionType.PUT, strike<span class="op">=</span><span class="fl">100.0</span>, expiry<span class="op">=</span><span class="fl">1.0</span>)</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>tree_price <span class="op">=</span> TreePricer(n_steps<span class="op">=</span><span class="dv">1000</span>).price(am_put, md, model)</span>
@@ -404,7 +404,7 @@ window.Quarto = {
 </section>
 <section id="effect-of-grid-refinement" class="level3">
 <h3 class="anchored" data-anchor-id="effect-of-grid-refinement">Effect of Grid Refinement</h3>
-<div id="cd289305" class="cell" data-execution_count="3">
+<div id="68a04c46" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> n <span class="kw">in</span> [<span class="dv">50</span>, <span class="dv">100</span>, <span class="dv">200</span>, <span class="dv">500</span>]:</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    p <span class="op">=</span> FiniteDifferencesPricer(n_s<span class="op">=</span>n, n_t<span class="op">=</span>n).price(am_put, md, model)</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"n_s=n_t=</span><span class="sc">{</span>n<span class="sc">:4d}</span><span class="ss">:  </span><span class="sc">{</span>p<span class="sc">:.5f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
