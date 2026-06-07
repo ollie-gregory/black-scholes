@@ -344,7 +344,7 @@ window.Quarto = {
 <p><code>ClosedFormPricer</code> is stateless: all methods are class methods taking <code>(instrument, market_data, model)</code> as arguments. It never needs to be instantiated.</p>
 <section id="pricing" class="level3">
 <h3 class="anchored" data-anchor-id="pricing">Pricing</h3>
-<div id="0e48a110" class="cell" data-execution_count="1">
+<div id="edee15be" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> options_pricer <span class="im">import</span> (</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    BlackScholesModel, ClosedFormPricer, EuropeanOption, MarketData, OptionType,</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>)</span>
@@ -360,7 +360,7 @@ window.Quarto = {
 </section>
 <section id="greeks" class="level3">
 <h3 class="anchored" data-anchor-id="greeks">Greeks</h3>
-<div id="fbbfb0cb" class="cell" data-execution_count="2">
+<div id="a8bc901e" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>g <span class="op">=</span> ClosedFormPricer.greeks(call, md, model)</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(g.delta)   <span class="co"># ~0.637  — hedge ratio</span></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(g.gamma)   <span class="co"># ~0.019  — rate of change of delta</span></span>
@@ -371,7 +371,7 @@ window.Quarto = {
 </section>
 <section id="implied-volatility-1" class="level3">
 <h3 class="anchored" data-anchor-id="implied-volatility-1">Implied Volatility</h3>
-<div id="13c59de5" class="cell" data-execution_count="3">
+<div id="1862e41e" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># If the ATM call is observed at 11.00, what vol does the market imply?</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>iv <span class="op">=</span> ClosedFormPricer.implied_vol(call, md, market_price<span class="op">=</span><span class="fl">11.00</span>)</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Implied vol: </span><span class="sc">{</span>iv<span class="sc">:.1%}</span><span class="ss">"</span>)  <span class="co"># ~21.5%, since 11.00 &gt; fair value of ~10.45</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -379,7 +379,7 @@ window.Quarto = {
 </section>
 <section id="scenario-analysis" class="level3">
 <h3 class="anchored" data-anchor-id="scenario-analysis">Scenario Analysis</h3>
-<div id="86266f37" class="cell" data-execution_count="4">
+<div id="25dace60" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> dataclasses</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>base <span class="op">=</span> MarketData(spot<span class="op">=</span><span class="fl">100.0</span>, rate<span class="op">=</span><span class="fl">0.05</span>)</span>
