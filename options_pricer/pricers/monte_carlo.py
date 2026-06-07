@@ -10,6 +10,7 @@ from ..instruments.base import OptionType
 from ..instruments.european import EuropeanOption
 from ..market.market_data import MarketData
 from ..models.black_scholes import BlackScholesModel
+from ..types import Greeks
 
 
 @dataclass
@@ -115,3 +116,48 @@ class MonteCarloPricer:
         # No-arbitrage floor: price >= intrinsic(spot)
         intrinsic_spot = float(payoff(np.array([md.spot]))[0])
         return max(price, intrinsic_spot)
+
+    def greeks(
+        self,
+        inst: EuropeanOption | AmericanOption,
+        md: MarketData,
+        model: BlackScholesModel,
+    ) -> Greeks:
+        """Estimate Greeks via central finite differences with common random numbers.
+
+        A fixed seed ensures each bumped reprice uses identical random paths,
+        so Monte Carlo noise largely cancels in the finite-difference ratios.
+        """
+        h_s = md.spot * 0.01  # 1 % spot bump
+        h_v = 0.01            # 1 vol-point bump
+        h_r = 0.001           # 10 bp rate bump
+
+        def _price(
+            spot: float = md.spot,
+            rate: float = md.rate,
+            vol: float = model.vol,
+            div_yield: float = md.div_yield,
+            expiry: float = inst.expiry,
+        ) -> float:
+            return self.price(
+                inst.__class__(option_type=inst.option_type, strike=inst.strike, expiry=expiry),
+                MarketData(spot=spot, rate=rate, div_yield=div_yield),
+                BlackScholesModel(vol=vol),
+            )
+
+        p0 = _price()
+        p_s_up = _price(spot=md.spot + h_s)
+        p_s_dn = _price(spot=md.spot - h_s)
+        p_v_up = _price(vol=model.vol + h_v)
+        p_v_dn = _price(vol=model.vol - h_v)
+        p_r_up = _price(rate=md.rate + h_r)
+        p_r_dn = _price(rate=md.rate - h_r)
+        p_t_dn = _price(expiry=inst.expiry - 1.0 / 365)
+
+        delta = (p_s_up - p_s_dn) / (2 * h_s)
+        gamma = (p_s_up - 2 * p0 + p_s_dn) / h_s**2
+        vega = (p_v_up - p_v_dn) / (2 * h_v) / 100   # per 1 vol point
+        rho = (p_r_up - p_r_dn) / (2 * h_r) / 100    # per 1 bp
+        theta = p_t_dn - p0                          # per calendar day
+
+        return Greeks(delta=delta, gamma=gamma, vega=vega, theta=theta, rho=rho)

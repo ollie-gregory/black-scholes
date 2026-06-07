@@ -11,6 +11,7 @@ from ..instruments.base import OptionType
 from ..instruments.european import EuropeanOption
 from ..market.market_data import MarketData
 from ..models.black_scholes import BlackScholesModel
+from ..types import Greeks
 
 
 @dataclass
@@ -27,12 +28,13 @@ class FiniteDifferencesPricer:
     n_t: int = 200          # number of backward time steps
     s_max_factor: float = 3.0  # S_max = s_max_factor * max(spot, strike)
 
-    def price(
+    def _solve(
         self,
         inst: EuropeanOption | AmericanOption,
         md: MarketData,
         model: BlackScholesModel,
-    ) -> float:
+    ) -> tuple[np.ndarray, np.ndarray]:
+        """Run the Crank-Nicolson solver. Returns (s_grid, v_grid)."""
         M = self.n_s
         r, q = md.rate, md.div_yield
         sigma = model.vol
@@ -113,4 +115,57 @@ class FiniteDifferencesPricer:
 
             v_left_prev, v_right_prev = v_left_new, v_right_new
 
+        return s, v
+
+    def price(
+        self,
+        inst: EuropeanOption | AmericanOption,
+        md: MarketData,
+        model: BlackScholesModel,
+    ) -> float:
+        s, v = self._solve(inst, md, model)
         return float(np.interp(md.spot, s, v))
+
+    def greeks(
+        self,
+        inst: EuropeanOption | AmericanOption,
+        md: MarketData,
+        model: BlackScholesModel,
+    ) -> Greeks:
+        S = md.spot
+        s, v = self._solve(inst, md, model)
+        dS = s[1] - s[0]
+
+        # Delta and Gamma read directly from the solved grid via np.gradient
+        dv = np.gradient(v, dS)
+        d2v = np.gradient(dv, dS)
+        delta = float(np.interp(S, s, dv))
+        gamma = float(np.interp(S, s, d2v))
+
+        v_mid = float(np.interp(S, s, v))
+
+        # Vega: central difference in σ; result per 1 vol point (÷100)
+        h_vol = 0.001
+        v_vol_up = self.price(inst, md, BlackScholesModel(vol=model.vol + h_vol))
+        v_vol_dn = self.price(inst, md, BlackScholesModel(vol=model.vol - h_vol))
+        vega = (v_vol_up - v_vol_dn) / (2 * h_vol) / 100
+
+        # Theta: 1-day backward difference; result per calendar day
+        dt = 1.0 / 365
+        if isinstance(inst, AmericanOption):
+            inst_short = AmericanOption(
+                option_type=inst.option_type, strike=inst.strike, expiry=inst.expiry - dt
+            )
+        else:
+            inst_short = EuropeanOption(
+                option_type=inst.option_type, strike=inst.strike, expiry=inst.expiry - dt
+            )
+        theta = (self.price(inst_short, md, model) - v_mid) / dt / 365
+
+        # Rho: central difference in r; result per 1 pct point (÷100)
+        h_r = 0.001
+        v_r_up = self.price(inst, MarketData(spot=S, rate=md.rate + h_r, div_yield=md.div_yield), model)
+        v_r_dn = self.price(inst, MarketData(spot=S, rate=md.rate - h_r, div_yield=md.div_yield), model)
+        rho = (v_r_up - v_r_dn) / (2 * h_r) / 100
+
+        return Greeks(delta=delta, gamma=gamma, vega=vega, theta=theta, rho=rho)
