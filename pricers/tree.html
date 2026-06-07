@@ -310,7 +310,7 @@ N = 1000: error ≈ 0.002</code></pre>
 <section id="the-treepricer-class" class="level2">
 <h2 class="anchored" data-anchor-id="the-treepricer-class">The <code>TreePricer</code> Class</h2>
 <p><code>TreePricer</code> is a dataclass with a single configuration field: the number of time steps.</p>
-<div id="7d9f687f" class="cell" data-execution_count="1">
+<div id="bea07818" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> options_pricer <span class="im">import</span> (</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    BlackScholesModel, EuropeanOption, MarketData, OptionType, TreePricer,</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>)</span>
@@ -327,7 +327,7 @@ N = 1000: error ≈ 0.002</code></pre>
 </div>
 <section id="comparing-accuracy-across-step-counts" class="level3">
 <h3 class="anchored" data-anchor-id="comparing-accuracy-across-step-counts">Comparing Accuracy Across Step Counts</h3>
-<div id="829db73a" class="cell" data-execution_count="2">
+<div id="da92910d" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> options_pricer <span class="im">import</span> ClosedFormPricer</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>exact <span class="op">=</span> ClosedFormPricer.price(call, md, model)</span>
@@ -340,7 +340,7 @@ N = 1000: error ≈ 0.002</code></pre>
 <section id="with-dividends" class="level3">
 <h3 class="anchored" data-anchor-id="with-dividends">With Dividends</h3>
 <p>The dividend yield <span class="math inline">\(q\)</span> is incorporated through the risk-neutral probability <span class="math inline">\(p = (e^{(r-q)\Delta t} - d)/(u-d)\)</span>. A positive dividend yield reduces <span class="math inline">\(p\)</span>, reflecting the drag on the stock’s expected return.</p>
-<div id="f2ca9501" class="cell" data-execution_count="3">
+<div id="cc2dcc76" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>md_div <span class="op">=</span> MarketData(spot<span class="op">=</span><span class="fl">100.0</span>, rate<span class="op">=</span><span class="fl">0.05</span>, div_yield<span class="op">=</span><span class="fl">0.02</span>)</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(TreePricer(n_steps<span class="op">=</span><span class="dv">200</span>).price(call, md_div, model))  <span class="co"># &lt; 10.45 (dividends lower calls)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
@@ -361,7 +361,7 @@ N = 1000: error ≈ 0.002</code></pre>
         s_nodes ← S * u^j * d^(step-j)  for j = 0..step
         v ← max(v, intrinsic(s_nodes))          # early exercise</code></pre>
 <p>This single extra line per step is the only change from the European tree.</p>
-<div id="86db5b6e" class="cell" data-execution_count="4">
+<div id="556dea36" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> options_pricer <span class="im">import</span> AmericanOption, BlackScholesModel, MarketData, OptionType, TreePricer</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>md    <span class="op">=</span> MarketData(spot<span class="op">=</span><span class="fl">100.0</span>, rate<span class="op">=</span><span class="fl">0.05</span>)</span>

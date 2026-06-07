@@ -294,7 +294,7 @@ window.Quarto = {
 </section>
 <section id="the-marketdata-class" class="level2">
 <h2 class="anchored" data-anchor-id="the-marketdata-class">The <code>MarketData</code> Class</h2>
-<div id="8c4c7ad9" class="cell" data-execution_count="1">
+<div id="8b349fbe" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> options_pricer <span class="im">import</span> MarketData</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Non-dividend-paying asset: spot=100, rate=5%</span></span>
@@ -307,7 +307,7 @@ window.Quarto = {
 <span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>md_neg_rate <span class="op">=</span> MarketData(spot<span class="op">=</span><span class="fl">100.0</span>, rate<span class="op">=-</span><span class="fl">0.005</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Invalid inputs raise <code>ValueError</code> at construction, not at pricing time:</p>
-<div id="22ca847a" class="cell" data-execution_count="2">
+<div id="9618ed8d" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># These will raise ValueError</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>MarketData(spot<span class="op">=</span><span class="fl">0.0</span>,   rate<span class="op">=</span><span class="fl">0.05</span>)   <span class="co"># spot must be positive</span></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>MarketData(spot<span class="op">=-</span><span class="fl">50.0</span>, rate<span class="op">=</span><span class="fl">0.05</span>)   <span class="co"># spot must be positive</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -316,7 +316,7 @@ window.Quarto = {
 <section id="using-marketdata-for-scenario-analysis" class="level2">
 <h2 class="anchored" data-anchor-id="using-marketdata-for-scenario-analysis">Using <code>MarketData</code> for Scenario Analysis</h2>
 <p>Because <code>MarketData</code> is a plain dataclass, running scenarios is straightforward. Use <code>dataclasses.replace()</code> to create variants with one field changed:</p>
-<div id="0c5f9b93" class="cell" data-execution_count="3">
+<div id="0090007a" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> options_pricer <span class="im">import</span> (</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    BlackScholesModel, ClosedFormPricer, EuropeanOption, MarketData, OptionType,</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>)</span>

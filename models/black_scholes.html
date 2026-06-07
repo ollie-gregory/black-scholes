@@ -414,7 +414,7 @@ Figure&nbsp;1: Profit / loss at expiry for a European call and put (K = £100, p
 <section id="the-blackscholesmodel-class" class="level2">
 <h2 class="anchored" data-anchor-id="the-blackscholesmodel-class">The <code>BlackScholesModel</code> Class</h2>
 <p><code>BlackScholesModel</code> holds the single free parameter of the model: <span class="math inline">\(\sigma\)</span>, the constant volatility. Everything else — the current spot price, interest rates, dividends — is observable market data and lives in <code>MarketData</code>. The model only encodes what the BS assumption adds: that the asset’s randomness is characterised by a single, constant number.</p>
-<div id="31399ce9" class="cell" data-execution_count="2">
+<div id="086baacd" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> options_pricer <span class="im">import</span> BlackScholesModel</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co"># 20% annualised volatility</span></span>
@@ -424,7 +424,7 @@ Figure&nbsp;1: Profit / loss at expiry for a European call and put (K = £100, p
 <span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="co"># BlackScholesModel(vol=0.0)  # raises ValueError</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>The model is passed to a pricer together with an instrument and market data:</p>
-<div id="9edfedc8" class="cell" data-execution_count="3">
+<div id="229858b3" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> options_pricer <span class="im">import</span> (</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    BlackScholesModel, EuropeanOption, MarketData, OptionType,</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    ClosedFormPricer, MonteCarloPricer, TreePricer,</span>
