@@ -1,3 +1,3 @@
-from .futures_option import CommodityOption
+from .futures_option import CommodityEuropeanOption, CommodityAmericanOption
 
-__all__ = ["CommodityOption"]
+__all__ = ["CommodityEuropeanOption", "CommodityAmericanOption"]

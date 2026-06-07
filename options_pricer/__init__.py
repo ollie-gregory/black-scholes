@@ -1,6 +1,6 @@
 from .core.types import Greeks
 from .core.instrument import OptionType
-from .instruments.equity.base import VanillaOption
+from .instruments.base import VanillaOption
 from .instruments.equity.american import AmericanOption
 from .instruments.equity.european import EuropeanOption
 from .instruments.fx.european import FXEuropeanOption
@@ -8,6 +8,7 @@ from .instruments.fx.american import FXAmericanOption
 from .market.equity import EquityMarketData
 from .market.fx import FXMarketData
 from .market.commodities import CommodityMarketData
+from .instruments.commodities.futures_option import CommodityEuropeanOption, CommodityAmericanOption
 from .models.black_scholes import BlackScholesModel
 from .models.heston import HestonModel
 from .models.merton import MertonModel
@@ -37,6 +38,8 @@ __all__ = [
     "MarketData",      # alias for EquityMarketData
     "FXMarketData",
     "CommodityMarketData",
+    "CommodityEuropeanOption",
+    "CommodityAmericanOption",
     # models
     "BlackScholesModel",
     "HestonModel",

@@ -2,13 +2,15 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from ..equity.base import VanillaOption
+from ..equity.european import EuropeanOption
+from ..equity.american import AmericanOption
 
 
 @dataclass
-class CommodityOption(VanillaOption):
-    """Commodity futures option — stub for future implementation.
+class CommodityEuropeanOption(EuropeanOption):
+    """European-style commodity option. Use with CommodityMarketData."""
 
-    Pricing uses CommodityMarketData where div_yield = convenience_yield - storage_cost,
-    making it structurally identical to an equity option under Black-Scholes.
-    """
+
+@dataclass
+class CommodityAmericanOption(AmericanOption):
+    """American-style commodity option. Use with CommodityMarketData."""

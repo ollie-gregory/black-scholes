@@ -1,4 +1,4 @@
-from .base import VanillaOption
+from ..base import VanillaOption
 from .european import EuropeanOption
 from .american import AmericanOption
 

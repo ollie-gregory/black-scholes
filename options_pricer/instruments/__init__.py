@@ -1,4 +1,4 @@
-from .equity.base import VanillaOption
+from .base import VanillaOption
 from .equity.european import EuropeanOption
 from .equity.american import AmericanOption
 from .fx.european import FXEuropeanOption
