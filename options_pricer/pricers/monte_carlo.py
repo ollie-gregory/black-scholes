@@ -9,7 +9,6 @@ from ..core.instrument import OptionType, VanillaInstrument
 from ..core.model import MarketDataLike, VolatilityModel
 from ..core.types import Greeks
 from ..instruments.equity.american import AmericanOption
-from ..instruments.equity.european import EuropeanOption
 from ..market.equity import EquityMarketData
 from ..models.black_scholes import BlackScholesModel
 
