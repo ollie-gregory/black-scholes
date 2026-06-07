@@ -83,3 +83,84 @@ class TestMonteCarloPricer:
         deep = AmericanOption(option_type=OptionType.PUT, strike=120.0, expiry=1.0)
         mc = MonteCarloPricer(n_paths=50_000, n_steps=50, seed=42).price(deep, ATM_MD, BS)
         assert mc >= 20.0 - 1e-6  # intrinsic = K - S = 120 - 100
+
+
+class TestMonteCarloGreeks:
+    MC = MonteCarloPricer(n_paths=200_000, seed=42)
+
+    def test_call_delta_bounds(self):
+        g = self.MC.greeks(ATM_CALL, ATM_MD, BS)
+        assert 0.0 < g.delta < 1.0
+
+    def test_put_delta_bounds(self):
+        g = self.MC.greeks(ATM_PUT, ATM_MD, BS)
+        assert -1.0 < g.delta < 0.0
+
+    def test_call_delta_close_to_closed_form(self):
+        cf = ClosedFormPricer.greeks(ATM_CALL, ATM_MD, BS)
+        mc = self.MC.greeks(ATM_CALL, ATM_MD, BS)
+        assert mc.delta == pytest.approx(cf.delta, abs=0.05)
+
+    def test_put_delta_close_to_closed_form(self):
+        cf = ClosedFormPricer.greeks(ATM_PUT, ATM_MD, BS)
+        mc = self.MC.greeks(ATM_PUT, ATM_MD, BS)
+        assert mc.delta == pytest.approx(cf.delta, abs=0.05)
+
+    def test_call_put_delta_sum(self):
+        gc = self.MC.greeks(ATM_CALL, ATM_MD, BS)
+        gp = self.MC.greeks(ATM_PUT, ATM_MD, BS)
+        assert gc.delta - gp.delta == pytest.approx(1.0, abs=0.05)
+
+    def test_gamma_positive(self):
+        assert self.MC.greeks(ATM_CALL, ATM_MD, BS).gamma > 0
+        assert self.MC.greeks(ATM_PUT, ATM_MD, BS).gamma > 0
+
+    def test_gamma_close_to_closed_form(self):
+        cf = ClosedFormPricer.greeks(ATM_CALL, ATM_MD, BS)
+        mc = self.MC.greeks(ATM_CALL, ATM_MD, BS)
+        assert mc.gamma == pytest.approx(cf.gamma, abs=0.005)
+
+    def test_vega_positive(self):
+        assert self.MC.greeks(ATM_CALL, ATM_MD, BS).vega > 0
+        assert self.MC.greeks(ATM_PUT, ATM_MD, BS).vega > 0
+
+    def test_vega_close_to_closed_form(self):
+        cf = ClosedFormPricer.greeks(ATM_CALL, ATM_MD, BS)
+        mc = self.MC.greeks(ATM_CALL, ATM_MD, BS)
+        assert mc.vega == pytest.approx(cf.vega, abs=0.05)
+
+    def test_theta_negative(self):
+        assert self.MC.greeks(ATM_CALL, ATM_MD, BS).theta < 0
+        assert self.MC.greeks(ATM_PUT, ATM_MD, BS).theta < 0
+
+    def test_theta_close_to_closed_form(self):
+        cf = ClosedFormPricer.greeks(ATM_CALL, ATM_MD, BS)
+        mc = self.MC.greeks(ATM_CALL, ATM_MD, BS)
+        assert mc.theta == pytest.approx(cf.theta, abs=0.01)
+
+    def test_call_rho_positive(self):
+        assert self.MC.greeks(ATM_CALL, ATM_MD, BS).rho > 0
+
+    def test_put_rho_negative(self):
+        assert self.MC.greeks(ATM_PUT, ATM_MD, BS).rho < 0
+
+    def test_rho_close_to_closed_form(self):
+        cf = ClosedFormPricer.greeks(ATM_CALL, ATM_MD, BS)
+        mc = self.MC.greeks(ATM_CALL, ATM_MD, BS)
+        assert mc.rho == pytest.approx(cf.rho, abs=0.10)
+
+    def test_greeks_returns_named_fields(self):
+        g = self.MC.greeks(ATM_CALL, ATM_MD, BS)
+        for field in ("delta", "gamma", "vega", "theta", "rho"):
+            assert hasattr(g, field)
+
+    def test_american_put_delta_bounds(self):
+        am_put = AmericanOption(option_type=OptionType.PUT, strike=100.0, expiry=1.0)
+        mc = MonteCarloPricer(n_paths=50_000, n_steps=50, seed=42)
+        g = mc.greeks(am_put, ATM_MD, BS)
+        assert -1.0 < g.delta < 0.0
+
+    def test_american_put_gamma_positive(self):
+        am_put = AmericanOption(option_type=OptionType.PUT, strike=100.0, expiry=1.0)
+        mc = MonteCarloPricer(n_paths=50_000, n_steps=50, seed=42)
+        assert mc.greeks(am_put, ATM_MD, BS).gamma > 0
