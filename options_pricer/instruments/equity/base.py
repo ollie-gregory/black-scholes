@@ -2,16 +2,17 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .base import Option, OptionType
+from ...core.instrument import OptionType
 
 
 @dataclass
-class EuropeanOption(Option):
+class VanillaOption:
+    option_type: OptionType
     strike: float
     expiry: float  # time to expiry in years
 
     def __post_init__(self) -> None:
-        super().__post_init__()
+        self.option_type = OptionType(self.option_type)
         if self.strike <= 0:
             raise ValueError(f"strike must be positive, got {self.strike}")
         if self.expiry <= 0:

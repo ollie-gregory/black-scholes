@@ -1,3 +1,5 @@
-from .market_data import MarketData
+from .equity import EquityMarketData
+from .fx import FXMarketData
+from .commodities import CommodityMarketData
 
-__all__ = ["MarketData"]
+__all__ = ["EquityMarketData", "FXMarketData", "CommodityMarketData"]

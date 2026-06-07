@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from enum import Enum
+from typing import Protocol, runtime_checkable
 
 
 class OptionType(str, Enum):
@@ -9,9 +9,8 @@ class OptionType(str, Enum):
     PUT = "put"
 
 
-@dataclass
-class Option:
+@runtime_checkable
+class VanillaInstrument(Protocol):
     option_type: OptionType
-
-    def __post_init__(self) -> None:
-        self.option_type = OptionType(self.option_type)
+    strike: float
+    expiry: float

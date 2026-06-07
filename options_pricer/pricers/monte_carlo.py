@@ -5,12 +5,13 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from ..instruments.american import AmericanOption
-from ..instruments.base import OptionType
-from ..instruments.european import EuropeanOption
-from ..market.market_data import MarketData
+from ..core.instrument import OptionType, VanillaInstrument
+from ..core.model import MarketDataLike, VolatilityModel
+from ..core.types import Greeks
+from ..instruments.equity.american import AmericanOption
+from ..instruments.equity.european import EuropeanOption
+from ..market.equity import EquityMarketData
 from ..models.black_scholes import BlackScholesModel
-from ..types import Greeks
 
 
 @dataclass
@@ -28,9 +29,9 @@ class MonteCarloPricer:
 
     def price(
         self,
-        inst: EuropeanOption | AmericanOption,
-        md: MarketData,
-        model: BlackScholesModel,
+        inst: VanillaInstrument,
+        md: MarketDataLike,
+        model: VolatilityModel,
     ) -> float:
         if isinstance(inst, AmericanOption):
             return self._price_american(inst, md, model)
@@ -38,9 +39,9 @@ class MonteCarloPricer:
 
     def _price_european(
         self,
-        inst: EuropeanOption,
-        md: MarketData,
-        model: BlackScholesModel,
+        inst: VanillaInstrument,
+        md: MarketDataLike,
+        model: VolatilityModel,
     ) -> float:
         rng = np.random.default_rng(self.seed)
         z = rng.standard_normal(self.n_paths)
@@ -60,9 +61,9 @@ class MonteCarloPricer:
 
     def _price_american(
         self,
-        inst: AmericanOption,
-        md: MarketData,
-        model: BlackScholesModel,
+        inst: VanillaInstrument,
+        md: MarketDataLike,
+        model: VolatilityModel,
     ) -> float:
         rng = np.random.default_rng(self.seed)
         N = self.n_steps
@@ -119,9 +120,9 @@ class MonteCarloPricer:
 
     def greeks(
         self,
-        inst: EuropeanOption | AmericanOption,
-        md: MarketData,
-        model: BlackScholesModel,
+        inst: VanillaInstrument,
+        md: MarketDataLike,
+        model: VolatilityModel,
     ) -> Greeks:
         """Estimate Greeks via central finite differences with common random numbers.
 
@@ -141,7 +142,7 @@ class MonteCarloPricer:
         ) -> float:
             return self.price(
                 inst.__class__(option_type=inst.option_type, strike=inst.strike, expiry=expiry),
-                MarketData(spot=spot, rate=rate, div_yield=div_yield),
+                EquityMarketData(spot=spot, rate=rate, div_yield=div_yield),
                 BlackScholesModel(vol=vol),
             )
 

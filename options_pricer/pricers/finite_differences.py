@@ -6,12 +6,13 @@ from dataclasses import dataclass
 import numpy as np
 from scipy.linalg import solve_banded
 
-from ..instruments.american import AmericanOption
-from ..instruments.base import OptionType
-from ..instruments.european import EuropeanOption
-from ..market.market_data import MarketData
+from ..core.instrument import OptionType, VanillaInstrument
+from ..core.model import MarketDataLike, VolatilityModel
+from ..core.types import Greeks
+from ..instruments.equity.american import AmericanOption
+from ..instruments.equity.european import EuropeanOption
+from ..market.equity import EquityMarketData
 from ..models.black_scholes import BlackScholesModel
-from ..types import Greeks
 
 
 @dataclass
@@ -30,9 +31,9 @@ class FiniteDifferencesPricer:
 
     def _solve(
         self,
-        inst: EuropeanOption | AmericanOption,
-        md: MarketData,
-        model: BlackScholesModel,
+        inst: VanillaInstrument,
+        md: MarketDataLike,
+        model: VolatilityModel,
     ) -> tuple[np.ndarray, np.ndarray]:
         """Run the Crank-Nicolson solver. Returns (s_grid, v_grid)."""
         M = self.n_s
@@ -119,18 +120,18 @@ class FiniteDifferencesPricer:
 
     def price(
         self,
-        inst: EuropeanOption | AmericanOption,
-        md: MarketData,
-        model: BlackScholesModel,
+        inst: VanillaInstrument,
+        md: MarketDataLike,
+        model: VolatilityModel,
     ) -> float:
         s, v = self._solve(inst, md, model)
         return float(np.interp(md.spot, s, v))
 
     def greeks(
         self,
-        inst: EuropeanOption | AmericanOption,
-        md: MarketData,
-        model: BlackScholesModel,
+        inst: VanillaInstrument,
+        md: MarketDataLike,
+        model: VolatilityModel,
     ) -> Greeks:
         S = md.spot
         s, v = self._solve(inst, md, model)
@@ -164,8 +165,8 @@ class FiniteDifferencesPricer:
 
         # Rho: central difference in r; result per 1 pct point (÷100)
         h_r = 0.001
-        v_r_up = self.price(inst, MarketData(spot=S, rate=md.rate + h_r, div_yield=md.div_yield), model)
-        v_r_dn = self.price(inst, MarketData(spot=S, rate=md.rate - h_r, div_yield=md.div_yield), model)
+        v_r_up = self.price(inst, EquityMarketData(spot=S, rate=md.rate + h_r, div_yield=md.div_yield), model)
+        v_r_dn = self.price(inst, EquityMarketData(spot=S, rate=md.rate - h_r, div_yield=md.div_yield), model)
         rho = (v_r_up - v_r_dn) / (2 * h_r) / 100
 
         return Greeks(delta=delta, gamma=gamma, vega=vega, theta=theta, rho=rho)

@@ -5,12 +5,12 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from ..instruments.american import AmericanOption
-from ..instruments.base import OptionType
-from ..instruments.european import EuropeanOption
-from ..market.market_data import MarketData
+from ..core.instrument import OptionType, VanillaInstrument
+from ..core.model import MarketDataLike, VolatilityModel
+from ..core.types import Greeks
+from ..instruments.equity.american import AmericanOption
+from ..market.equity import EquityMarketData
 from ..models.black_scholes import BlackScholesModel
-from ..types import Greeks
 
 
 @dataclass
@@ -21,9 +21,9 @@ class TreePricer:
 
     def price(
         self,
-        inst: EuropeanOption | AmericanOption,
-        md: MarketData,
-        model: BlackScholesModel,
+        inst: VanillaInstrument,
+        md: MarketDataLike,
+        model: VolatilityModel,
     ) -> float:
         N = self.n_steps
         dt = inst.expiry / N
@@ -60,9 +60,9 @@ class TreePricer:
 
     def greeks(
         self,
-        inst: EuropeanOption | AmericanOption,
-        md: MarketData,
-        model: BlackScholesModel,
+        inst: VanillaInstrument,
+        md: MarketDataLike,
+        model: VolatilityModel,
         d_vol: float = 0.001,
         d_rate: float = 1e-4,
     ) -> Greeks:
@@ -117,8 +117,8 @@ class TreePricer:
         ) / (2 * d_vol) / 100
 
         # Rho: central difference, per 1 bp
-        md_up = MarketData(spot=md.spot, rate=md.rate + d_rate, div_yield=md.div_yield)
-        md_dn = MarketData(spot=md.spot, rate=md.rate - d_rate, div_yield=md.div_yield)
+        md_up = EquityMarketData(spot=md.spot, rate=md.rate + d_rate, div_yield=md.div_yield)
+        md_dn = EquityMarketData(spot=md.spot, rate=md.rate - d_rate, div_yield=md.div_yield)
         rho = (self.price(inst, md_up, model) - self.price(inst, md_dn, model)) / (2 * d_rate) / 100
 
         return Greeks(delta=delta, gamma=gamma, vega=vega, theta=theta, rho=rho)

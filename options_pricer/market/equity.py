@@ -4,9 +4,9 @@ from dataclasses import dataclass
 
 
 @dataclass
-class MarketData:
-    spot: float       # current underlying price (S)
-    rate: float       # risk-free rate, annualised continuous compounding (r)
+class EquityMarketData:
+    spot: float           # current underlying price (S)
+    rate: float           # risk-free rate, annualised continuous compounding (r)
     div_yield: float = 0.0  # continuous dividend yield (q)
 
     def __post_init__(self) -> None:

@@ -4,11 +4,11 @@ import math
 
 from scipy.stats import norm
 
-from ..instruments.base import OptionType
-from ..instruments.european import EuropeanOption
-from ..market.market_data import MarketData
+from ..core.instrument import OptionType, VanillaInstrument
+from ..core.model import MarketDataLike, VolatilityModel
+from ..core.types import Greeks
+from ..instruments.equity.european import EuropeanOption
 from ..models.black_scholes import BlackScholesModel
-from ..types import Greeks
 
 
 class ClosedFormPricer:
@@ -16,9 +16,9 @@ class ClosedFormPricer:
 
     @staticmethod
     def _d1d2(
-        inst: EuropeanOption,
-        md: MarketData,
-        model: BlackScholesModel,
+        inst: VanillaInstrument,
+        md: MarketDataLike,
+        model: VolatilityModel,
     ) -> tuple[float, float]:
         sqrt_t = math.sqrt(inst.expiry)
         d1 = (
@@ -30,9 +30,9 @@ class ClosedFormPricer:
     @classmethod
     def price(
         cls,
-        inst: EuropeanOption,
-        md: MarketData,
-        model: BlackScholesModel,
+        inst: VanillaInstrument,
+        md: MarketDataLike,
+        model: VolatilityModel,
     ) -> float:
         d1, d2 = cls._d1d2(inst, md, model)
         df_r = math.exp(-md.rate * inst.expiry)
@@ -46,9 +46,9 @@ class ClosedFormPricer:
     @classmethod
     def greeks(
         cls,
-        inst: EuropeanOption,
-        md: MarketData,
-        model: BlackScholesModel,
+        inst: VanillaInstrument,
+        md: MarketDataLike,
+        model: VolatilityModel,
     ) -> Greeks:
         d1, d2 = cls._d1d2(inst, md, model)
         sqrt_t = math.sqrt(inst.expiry)
@@ -80,8 +80,8 @@ class ClosedFormPricer:
     @classmethod
     def implied_vol(
         cls,
-        inst: EuropeanOption,
-        md: MarketData,
+        inst: VanillaInstrument,
+        md: MarketDataLike,
         market_price: float,
         tol: float = 1e-6,
         max_iter: int = 200,

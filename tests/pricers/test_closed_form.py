@@ -137,6 +137,69 @@ class TestImpliedVol:
         assert iv == pytest.approx(0.25, abs=1e-6)
 
 
+class TestFXClosedForm:
+    """Verify Garman-Kohlhagen pricing via FXMarketData + existing ClosedFormPricer."""
+
+    FX_MD = None  # set below after import
+
+    def _md(self):
+        from options_pricer import FXMarketData
+        return FXMarketData(spot=1.08, domestic_rate=0.05, foreign_rate=0.03)
+
+    def _opt(self, option_type="call"):
+        from options_pricer import FXEuropeanOption
+        return FXEuropeanOption(option_type=option_type, strike=1.08, expiry=1.0, currency_pair="EURUSD")
+
+    def _bs(self):
+        return BlackScholesModel(vol=0.10)
+
+    def test_fx_call_price_positive(self):
+        price = ClosedFormPricer.price(self._opt("call"), self._md(), self._bs())
+        assert price > 0
+
+    def test_fx_put_price_positive(self):
+        price = ClosedFormPricer.price(self._opt("put"), self._md(), self._bs())
+        assert price > 0
+
+    def test_fx_put_call_parity(self):
+        import math
+        md = self._md()
+        bs = self._bs()
+        c = ClosedFormPricer.price(self._opt("call"), md, bs)
+        p = ClosedFormPricer.price(self._opt("put"), md, bs)
+        # GK put-call parity: C - P = S * e^(-r_f*T) - K * e^(-r_d*T)
+        expected = md.spot * math.exp(-md.foreign_rate * 1.0) - self._opt().strike * math.exp(-md.domestic_rate * 1.0)
+        assert c - p == pytest.approx(expected, abs=1e-9)
+
+    def test_fx_zero_foreign_rate_equals_equity(self):
+        """FX option with r_f=0 must equal equity option with div_yield=0."""
+        from options_pricer import FXMarketData, FXEuropeanOption
+        fx_opt = FXEuropeanOption(option_type="call", strike=100.0, expiry=1.0)
+        fx_md = FXMarketData(spot=100.0, domestic_rate=0.05, foreign_rate=0.0)
+        bs = BlackScholesModel(vol=0.20)
+
+        fx_price = ClosedFormPricer.price(fx_opt, fx_md, bs)
+        eq_price = ClosedFormPricer.price(ATM_CALL, ATM_MD, bs)
+        assert fx_price == pytest.approx(eq_price, rel=1e-9)
+
+    def test_fx_call_approx_gk_analytic(self):
+        """S=1.08, K=1.08, T=1, r_d=5%, r_f=3%, σ=10% → GK call ≈ 0.0524."""
+        price = ClosedFormPricer.price(self._opt("call"), self._md(), self._bs())
+        assert price == pytest.approx(0.0524, abs=5e-4)
+
+    def test_fx_greeks_delta_bounds(self):
+        g = ClosedFormPricer.greeks(self._opt("call"), self._md(), self._bs())
+        assert 0.0 < g.delta < 1.0
+
+    def test_fx_implied_vol_roundtrip(self):
+        opt = self._opt("call")
+        md = self._md()
+        bs = self._bs()
+        price = ClosedFormPricer.price(opt, md, bs)
+        iv = ClosedFormPricer.implied_vol(opt, md, market_price=price)
+        assert iv == pytest.approx(0.10, abs=1e-6)
+
+
 class TestValidation:
     def test_negative_strike_raises(self):
         with pytest.raises(ValueError, match="strike"):
